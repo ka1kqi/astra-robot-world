@@ -301,6 +301,7 @@ def execute_program(
                     ctl.cancel,
                     bounded_tick,
                     ctl.status,
+                    target_rotation=step.target_rotation,
                 )
                 if not placed["ok"]:
                     raise MotionError(placed["error_code"], placed["detail"])

@@ -369,7 +369,7 @@ def create_app(runtime, *, adapter=None):
 
             notebook = ActionNotebook(ACTIONS_DIR / "notebook.sqlite3")
             related = []
-            for kind in ("topple", "displace", "circle", "extract"):
+            for kind in ("topple", "displace", "circle", "extract", "rotate"):
                 related.extend(await asyncio.to_thread(notebook.related, kind, 1))
             result = await interpret_action(
                 adapter, proposal["message"], world, related

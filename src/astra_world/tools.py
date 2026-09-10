@@ -38,6 +38,7 @@ class ScenarioArgs(StrictModel):
 class PickPlaceArgs(StrictModel):
     object_id: str
     target_position: tuple[float, float, float]
+    target_rotation: tuple[float, float, float] | None = None
 
 
 class ApproachWaypoint(StrictModel):
@@ -213,6 +214,7 @@ def dispatch(
             cancel,
             tick,
             status,
+            target_rotation=arguments.target_rotation,
         )
     if isinstance(session, GeneralSession) and name in (
         "sort_blocks",

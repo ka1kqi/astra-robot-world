@@ -18,6 +18,7 @@ class MotionStep(Contract):
     position: Vector | None = None
     reference_id: Identifier | None = None
     rotation: Vector | None = None
+    target_rotation: Vector | None = None
     opened: bool | None = None
     direction: Vector | None = None
     distance: float = Field(default=0.1, gt=0, le=0.25)
@@ -28,6 +29,8 @@ class MotionStep(Contract):
 
     @model_validator(mode="after")
     def meaningful(self):
+        if self.target_rotation is not None and self.op != "pick_place":
+            raise ValueError("target_rotation is only allowed on pick_place; use rotation for gripper poses.")
         if self.op in ("move_to_pose", "pick_place") and self.position is None:
             raise ValueError("This step requires a position.")
         if self.position is not None and any(abs(x) > 2 for x in self.position):
@@ -61,7 +64,7 @@ class ActionProgram(Contract):
 
 
 class GoalSpec(Contract):
-    kind: Literal["topple", "displace", "circle", "extract"]
+    kind: Literal["topple", "displace", "circle", "extract", "rotate"]
     object_id: Identifier | None = None
     radius: float = Field(default=0.06, ge=0.02, le=0.12)
     plane: Literal["xy", "xz", "yz"] = "xy"
@@ -70,12 +73,19 @@ class GoalSpec(Contract):
     landing_id: Identifier | None = None
     min_displacement: float = Field(default=0.04, ge=0.01, le=0.5)
     target_position: Vector | None = None
+    target_rotation: Vector | None = None
+    angular_tolerance: float = Field(default=math.radians(5), ge=math.radians(.5), le=math.radians(15))
     tolerance: float = Field(default=0.04, ge=0.005, le=0.1)
     preserve_ids: list[Identifier] = Field(default_factory=list, max_length=64)
     preserve_tolerance: float = Field(default=0.02, ge=0.001, le=0.05)
 
     @model_validator(mode="after")
     def complete(self):
+        if self.kind == "rotate":
+            if self.target_rotation is None or self.support_id is not None:
+                raise ValueError("Rotate requires target_rotation and cannot exempt a support object.")
+        elif self.target_rotation is not None:
+            raise ValueError("Only rotation goals can declare target_rotation.")
         if self.kind == "extract":
             roles = (self.object_id, self.supported_id, self.landing_id)
             if not all(roles) or len(set(roles)) != 3 or self.support_id:

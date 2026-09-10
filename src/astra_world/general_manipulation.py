@@ -1,9 +1,11 @@
 """Composable, physically validated pick/place for supported Panda props."""
 
 import numpy as np
+from scipy.spatial.transform import Rotation
 from .catalog import get_asset
 from .motion import (
     Controller,
+    DOWN,
     MotionError,
     execute_transport,
     solve_ik,
@@ -12,7 +14,7 @@ from .motion import (
 )
 
 
-def pick_place(world, object_id, target_position, cancel=None, tick=None, status=None):
+def pick_place(world, object_id, target_position, cancel=None, tick=None, status=None, *, target_rotation=None):
     command_trace = []
 
     def result(ok, **kwargs):
@@ -75,17 +77,27 @@ def pick_place(world, object_id, target_position, cancel=None, tick=None, status
             error_code="invalid_target",
             detail="Target is the object center and must be finite and above the ground.",
         )
+    desired_rotation = None
+    if target_rotation is not None:
+        angles = np.asarray(target_rotation, dtype=float)
+        if angles.shape != (3,) or not np.isfinite(angles).all():
+            return result(False, error_code="invalid_target", detail="Target rotation must contain three finite XYZ angles in radians.")
+        desired_rotation = Rotation.from_euler("XYZ", angles).as_matrix()
+        initial_rotation = world.data.body(body_name(world, object_id)).xmat.reshape(3, 3)
+        delta = desired_rotation @ initial_rotation.T
+        if not np.allclose(delta @ [0, 0, 1], [0, 0, 1], atol=.02):
+            return result(False, error_code="unsupported_rotation", detail="Placement supports rotation around world Z while preserving the current flat support face; tilting needs a different grasp.")
     ctl = Controller(world, cancel, tick, status)
 
     def gripper(opened):
         operation = ctl.release if opened and ctl.held_id is not None else lambda: ctl.gripper(opened)
         return command("gripper", {"opened": opened}, operation)
 
-    def move(position, seconds=1.2):
-        return command("move", {"position": list(position), "seconds": seconds}, lambda: ctl.move(position, seconds))
+    def move(position, seconds=1.2, rotation=DOWN):
+        return command("move", {"position": list(position), "seconds": seconds, "rotation": Rotation.from_matrix(rotation).as_euler("XYZ").tolist()}, lambda: ctl.move(position, seconds, rotation))
 
-    def transport(position, held_id=None):
-        return command("execute_transport", {"position": list(position), "held_id": held_id}, lambda: execute_transport(ctl, position, held_id))
+    def transport(position, held_id=None, rotation=DOWN):
+        return command("execute_transport", {"position": list(position), "held_id": held_id, "rotation": Rotation.from_matrix(rotation).as_euler("XYZ").tolist()}, lambda: execute_transport(ctl, position, held_id, rotation))
     body = body_name(world, object_id)
     try:
         # Validate target reachability before disturbing the source object.
@@ -117,17 +129,27 @@ def pick_place(world, object_id, target_position, cancel=None, tick=None, status
             raise MotionError(
                 "grasp_failed", f"{object_id} did not lift with the fingers."
             )
-        route = transport([target[0], target[1], height], object_id)
-        move(target + [0, 0, 0.018], 1.5)
+        place_rotation = DOWN
+        if desired_rotation is not None:
+            # Preserve the measured object-to-gripper transform after the lift.
+            held_rotation = world.data.body(body).xmat.reshape(3, 3).copy()
+            grasp_rotation = world.data.site("grasp").xmat.reshape(3, 3).copy()
+            place_rotation = desired_rotation @ held_rotation.T @ grasp_rotation
+        route = transport([target[0], target[1], height], object_id, place_rotation)
+        move(target + [0, 0, 0.018], 1.5, place_rotation)
         gripper(True)
-        move([target[0], target[1], height])
+        move([target[0], target[1], height], rotation=place_rotation)
         stable = 0.0
         for _ in range(round(3 / world.model.opt.timestep)):
             ctl.step(world.model.opt.timestep)
             actual = world.data.body(body).xpos
             velocity = world.data.joint(joint_name(world, object_id)).qvel
+            actual_rotation = world.data.body(body).xmat.reshape(3, 3)
+            rotation_error = (float(Rotation.from_matrix(desired_rotation @ actual_rotation.T).magnitude())
+                              if desired_rotation is not None else None)
             if (
-                np.linalg.norm(actual[:2] - target[:2]) < 0.025
+                (rotation_error is None or rotation_error <= np.deg2rad(5))
+                and np.linalg.norm(actual[:2] - target[:2]) < 0.025
                 and abs(actual[2] - target[2]) < 0.015
                 and np.linalg.norm(velocity[:3]) < 0.02
                 and np.linalg.norm(velocity[3:]) < 0.2
@@ -140,6 +162,8 @@ def pick_place(world, object_id, target_position, cancel=None, tick=None, status
                         payload={
                             "object_id": object_id,
                             "position": actual.tolist(),
+                            "rotation": Rotation.from_matrix(actual_rotation).as_euler("XYZ").tolist(),
+                            "rotation_error": rotation_error,
                             "route": route,
                             "settled_seconds": stable,
                         },

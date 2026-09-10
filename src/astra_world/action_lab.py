@@ -98,6 +98,7 @@ class Measurements(Contract):
     preservation_displacements: dict[str, float]
     goal_score: float
     distance_to_goal: float | None = None
+    angular_error: float | None = Field(default=None, ge=0, le=np.pi)
     extraction: ExtractionMeasurements | None = None
     circle: dict | None = None
     trace: list[list[float]] = Field(default_factory=list, max_length=256)
@@ -155,6 +156,30 @@ class SavedAction(Contract):
                             and measured.distance_to_goal <= self.goal.tolerance
                         )
                     )
+                )
+            if self.goal.kind == "rotate":
+                target_position = self.goal.target_position
+                if target_position is None:
+                    target_position = self.initial_positions.get(self.goal.object_id)
+                if (
+                    len(measured.rotation) != 3 or len(measured.position) != 3
+                    or target_position is None or len(target_position) != 3
+                ):
+                    raise ValueError("Rotation verification requires measured orientation and position vectors.")
+                angular_error = float((
+                    Rotation.from_euler("XYZ", self.goal.target_rotation)
+                    * Rotation.from_euler("XYZ", measured.rotation).inv()
+                ).magnitude())
+                distance = float(np.linalg.norm(np.asarray(measured.position) - target_position))
+                achieved = achieved and (
+                    measured.angular_error is not None
+                    and abs(measured.angular_error - angular_error) <= 1e-6
+                    and angular_error <= self.goal.angular_tolerance
+                    and distance <= self.goal.tolerance
+                    and measured.distance_to_goal is not None
+                    and abs(measured.distance_to_goal - distance) <= 1e-6
+                    and measured.linear_speed <= 0.015
+                    and measured.angular_speed <= 0.2
                 )
             if not (
                 report.ok and report.goal_success and measured.preserved and achieved
@@ -336,11 +361,20 @@ class _Evaluator:
             distance <= goal.preserve_tolerance
             for distance in self.max_displacements.values()
         )
+        target_position = goal.target_position
+        if goal.kind == "rotate" and target_position is None:
+            target_position = self.positions[goal.object_id]
         distance = (
-            float(np.linalg.norm(position - goal.target_position))
-            if goal.kind in ("displace", "extract") and goal.target_position is not None
+            float(np.linalg.norm(position - target_position))
+            if goal.kind in ("displace", "extract", "rotate") and target_position is not None
             else None
         )
+        rotation = Rotation.from_matrix(body.xmat.reshape(3, 3))
+        angular_error = None
+        if goal.kind == "rotate":
+            angular_error = float((
+                Rotation.from_euler("XYZ", goal.target_rotation) * rotation.inv()
+            ).magnitude())
         extraction = None
         if goal.kind == "extract":
             upper = world.data.body(self.upper)
@@ -374,6 +408,8 @@ class _Evaluator:
             predicate = on_ground and not supported
         elif goal.kind == "displace":
             predicate = distance <= goal.tolerance
+        elif goal.kind == "rotate":
+            predicate = angular_error <= goal.angular_tolerance and distance <= goal.tolerance
         else:
             predicate = False
         stable = linear_speed <= 0.015 and angular_speed <= 0.2
@@ -406,6 +442,10 @@ class _Evaluator:
                 + 0.15 * extraction["upper_on_landing"]
                 + 0.3 * min(1.0, duration / SETTLED_SECONDS)
             )
+        elif goal.kind == "rotate":
+            orientation_score = max(0.0, 1.0 - angular_error / np.pi)
+            position_score = max(0.0, 1.0 - distance / goal.tolerance)
+            score = 0.5 * orientation_score + 0.2 * position_score + 0.3 * min(1.0, duration / SETTLED_SECONDS)
         elif goal.kind == "circle":
             score = 0.0
         else:
@@ -417,7 +457,6 @@ class _Evaluator:
             score = 0.7 * max(
                 0.0, 1.0 - distance / max(initial_distance, goal.tolerance)
             ) + 0.3 * min(1.0, duration / SETTLED_SECONDS)
-        rotation = Rotation.from_matrix(body.xmat.reshape(3, 3))
         return Measurements(
             position=position.tolist(),
             rotation=rotation.as_euler("XYZ").tolist(),
@@ -436,6 +475,7 @@ class _Evaluator:
             preservation_displacements=dict(self.max_displacements),
             goal_score=float(score if preserved else 0.0),
             distance_to_goal=distance,
+            angular_error=angular_error,
             extraction=extraction,
         ).model_dump(mode="json")
 
@@ -564,13 +604,20 @@ class ActionLab:
                 detail="The upper target must initially rest on the declared support.",
             )
         if (
-            goal.kind == "displace"
+            goal.kind in ("displace", "rotate")
             and evaluator.latest["distance_to_goal"] <= goal.tolerance
+            and (
+                goal.kind != "rotate"
+                or evaluator.latest["angular_error"] <= goal.angular_tolerance
+            )
         ):
             return self._result(
                 False,
                 error_code="goal_already_satisfied",
-                detail="The target already occupies the requested region.",
+                detail=(
+                    "The target already satisfies the requested orientation and position."
+                    if goal.kind == "rotate" else "The target already occupies the requested region."
+                ),
             )
         draft = Draft(
             uuid4().hex, args.name, goal, initial, positions, args.trial_budget
@@ -946,13 +993,20 @@ class ActionLab:
                 world=world,
             )
         if (
-            goal.kind == "displace"
+            goal.kind in ("displace", "rotate")
             and evaluator.latest["distance_to_goal"] <= goal.tolerance
+            and (
+                goal.kind != "rotate"
+                or evaluator.latest["angular_error"] <= goal.angular_tolerance
+            )
         ):
             return self._result(
                 False,
                 error_code="goal_already_satisfied",
-                detail="The target already occupies the requested region.",
+                detail=(
+                    "The target already satisfies the requested orientation and position."
+                    if goal.kind == "rotate" else "The target already occupies the requested region."
+                ),
                 world=world,
             )
         stop = _Stop(cancel, time.monotonic() + MAX_WALL_SECONDS)

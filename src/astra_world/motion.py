@@ -122,8 +122,8 @@ class Controller:
                 "tracking_error", "Arm could not reach the commanded pose."
             )
 
-    def move(self, pos, seconds=1.2):
-        q = solve_ik(self.world, pos, self.world.arm_q)
+    def move(self, pos, seconds=1.2, rotation=DOWN):
+        q = solve_ik(self.world, pos, self.world.arm_q, rotation)
         if q is None:
             raise MotionError(
                 "unreachable",
@@ -242,7 +242,7 @@ def path_is_clear(world, qs, held_id=None):
     return True
 
 
-def plan_transport(world, target, held_id=None):
+def plan_transport(world, target, held_id=None, rotation=DOWN):
     """Try bounded Cartesian corridors; every joint segment is collision checked."""
     start = world.data.site("grasp").xpos.copy()
     target = np.asarray(target)
@@ -261,7 +261,7 @@ def plan_transport(world, target, held_id=None):
         q = world.arm_q
         qs = []
         for pos in positions:
-            q = solve_ik(world, pos, q)
+            q = solve_ik(world, pos, q, rotation)
             if q is None:
                 break
             qs.append(q)
@@ -276,9 +276,9 @@ def plan_transport(world, target, held_id=None):
     return None
 
 
-def execute_transport(ctl, target, held_id=None):
+def execute_transport(ctl, target, held_id=None, rotation=DOWN):
     w = ctl.world
-    path = plan_transport(w, target, held_id)
+    path = plan_transport(w, target, held_id, rotation)
     if path is None:
         raise MotionError(
             "no_path", "No collision-free route was found in the supported corridors."

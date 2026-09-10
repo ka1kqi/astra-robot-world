@@ -151,7 +151,7 @@ TOOLS.extend(
         },
         tool(
             "pick_place",
-            "Use a Panda in a general world to physically grasp a supported small box or cylinder and release its center at target_position. Other assets may return unsupported_grasp.",
+            "Use a Panda in a general world to physically grasp a supported small box or cylinder and release its center at target_position. Optional target_rotation is absolute intrinsic XYZ radians; supports world-Z turns preserving the current flat support face, verifies orientation within 5 degrees. Other assets may return unsupported_grasp.",
             {
                 "object_id": {"type": "string"},
                 "target_position": {
@@ -159,6 +159,10 @@ TOOLS.extend(
                     "items": {"type": "number"},
                     "minItems": 3,
                     "maxItems": 3,
+                },
+                "target_rotation": {
+                    "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3,
+                    "description": "Optional absolute object orientation, intrinsic XYZ radians. Only world-Z turns preserving its flat support face are supported."
                 },
             },
             ["object_id", "target_position"],
@@ -275,6 +279,7 @@ Leave at least 0.10m between source objects for the open gripper, and choose dis
 For packing, source centers near X=0.40 or 0.55, Y=-0.12 and a tray near X=0.48, Y=0.35 keep pickup and destination regions separated.
 Compute center Z from the actual support top plus half the object's height; account for tray floor height and interior bounds.
 Observe actual positions before each grasp. pick_place target_position is the desired object CENTER after release, including when stacking.
+To rotate a supported object, pick_place accepts target_rotation (absolute intrinsic XYZ radians), with target_position at its current center for an in-place turn. Compute a requested relative world-Z turn from the observed orientation; 45 degrees is pi/4 radians. The tool verifies final orientation within 5 degrees and settling. Tilting is unsupported and rejected before motion. For learned rotation skills use goal kind='rotate' with target_rotation and angular_tolerance; typed pick_place steps accept target_rotation too. Do not claim orientation control or a rotation evaluator is unavailable.
 Treat these workspace ranges as layout guidance, not proof of reachability or a collision-free route; respect reported planning failures.
 Do not assume a grasp policy exists for arbitrary imported meshes or all catalog objects. Report unsupported or unreachable goals honestly.
 To add an obstacle or other object to a general world, use add_entity; it preserves existing robot/object state and rejects overlaps.

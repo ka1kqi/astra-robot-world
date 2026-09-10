@@ -30,9 +30,9 @@
 <aside class="detail" aria-live="polite" aria-atomic="true"><span class="meta" id="detail-role"></span><h2 id="detail-title"></h2><p id="detail-body"></p><ul id="detail-list"></ul><p class="boundary" id="detail-boundary"></p><code id="detail-source"></code></aside>
 </div>
 <ol class="sequence" id="sequence"></ol>
-<p class="intro">Chat can attach the current browser simulation viewport. Astra receives its image and live or replay label, while physics tools provide exact coordinates. Images are retained only during that turn.</p>
+<p class="intro">Object rotation is supported through orientation-aware pick/place and a measured rotation goal. Chat can attach the current browser simulation viewport. Astra receives its image and live or replay label, while physics tools provide exact coordinates. Images are retained only during that turn.</p>
 <section aria-labelledby="contracts-title"><div class="section-head"><div><h2 id="contracts-title">What the system can actually promise</h2><p>The evaluator defines success. A model's explanation does not certify it.</p></div></div><div class="boundaries">
-<article class="boundary-block"><h3>Learning means bounded program search</h3><p>Review a measurable goal, capture a scene snapshot, test a candidate, inspect failures, and revise. A successful candidate runs three times from fresh copies before it can be saved. The draft has 3–10 trials, including confirmations.</p><p>Goals are <code>topple</code>, <code>displace</code>, <code>circle</code>, and <code>extract</code>. This is task-specific program search with persistent notes; it does not train model weights or execute arbitrary generated Python.</p><p><strong>Per model turn:</strong> at most 36 experiment/read-only calls and 12 live calls, then a tool-free summary. The experiment budget includes notebook writes and saving actions; its name does not mean every call is read-only.</p></article>
+<article class="boundary-block"><h3>Learning means bounded program search</h3><p>Review a measurable goal, capture a scene snapshot, test a candidate, inspect failures, and revise. A successful candidate runs three times from fresh copies before it can be saved. The draft has 3–10 trials, including confirmations.</p><p>Goals are <code>topple</code>, <code>displace</code>, <code>circle</code>, <code>extract</code>, and <code>rotate</code>. This is task-specific program search with persistent notes; it does not train model weights or execute arbitrary generated Python.</p><p><strong>Per model turn:</strong> at most 36 experiment/read-only calls and 12 live calls, then a tool-free summary. The experiment budget includes notebook writes and saving actions; its name does not mean every call is read-only.</p></article>
 <article class="boundary-block"><h3>MotionStep operations live inside programs</h3><div class="primitives"><code>move_to_pose</code><code>gripper</code><code>contact_stroke</code><code>wait</code><code>pick_place</code></div><p>These are nested <code>ActionProgram.steps</code> operations, not five extra Astra tools. <code>pick_place</code> also exists as a separate top-level tool with its own argument schema.</p><p>Programs have at most <strong>24 steps</strong> and <strong>30 simulated seconds</strong>. The action controller enforces a <strong>40 N</strong> aggregate robot contact-load limit, joint limits, and collision rules.</p></article>
 <article class="boundary-block"><h3>Extraction has three distinct object roles</h3><p><code>object_id</code> is the lower object to extract; <code>supported_id</code> is the upper object resting on it; <code>landing_id</code> is the body that must support the upper afterward. Do not substitute the topple goal's <code>support_id</code>.</p><p>The lower must move far enough from its start and horizontally away from the upper. The upper must lose lower support and land on the specified body; both must settle. Direct upper manipulation is forbidden. Other bodies, including the landing body, are preserved. Supporting contact is measured; full tray containment is not.</p></article>
 <article class="boundary-block"><h3>A clear approach is useful evidence, not success</h3><p><code>check_approaches</code> checks up to 8 candidate routes of up to 8 absolute world-coordinate waypoints on copies. It searches IK and samples joint interpolation for collisions. It consumes no physical trial and does not move the live world.</p><p>IK's alternate seeds are mathematical starting guesses on scratch data. They do not teleport the live arm. A failed bounded search does not prove geometric impossibility; a clear kinematic path does not establish a successful physical grasp or contact action.</p></article>
@@ -516,7 +516,7 @@
   },
   {
     "name": "pick_place",
-    "description": "Use a Panda in a general world to physically grasp a supported small box or cylinder and release its center at target_position. Other assets may return unsupported_grasp.",
+    "description": "Use a Panda in a general world to physically grasp a supported small box or cylinder and release its center at target_position. Optional target_rotation is absolute intrinsic XYZ radians; supports world-Z turns preserving the current flat support face, verifies orientation within 5 degrees. Other assets may return unsupported_grasp.",
     "parameters": {
       "type": "object",
       "properties": {
@@ -530,6 +530,15 @@
           },
           "minItems": 3,
           "maxItems": 3
+        },
+        "target_rotation": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "Optional absolute object orientation, intrinsic XYZ radians. Only world-Z turns preserving its flat support face are supported."
         }
       },
       "required": [
@@ -806,7 +815,8 @@
                 "topple",
                 "displace",
                 "circle",
-                "extract"
+                "extract",
+                "rotate"
               ],
               "title": "Kind",
               "type": "string"
@@ -903,6 +913,30 @@
               ],
               "default": null,
               "title": "Target Position"
+            },
+            "target_rotation": {
+              "anyOf": [
+                {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Target Rotation"
+            },
+            "angular_tolerance": {
+              "default": 0.08726646259971647,
+              "maximum": 0.2617993877991494,
+              "minimum": 0.008726646259971648,
+              "title": "Angular Tolerance",
+              "type": "number"
             },
             "tolerance": {
               "default": 0.04,
@@ -1052,6 +1086,23 @@
               ],
               "default": null,
               "title": "Rotation"
+            },
+            "target_rotation": {
+              "anyOf": [
+                {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Target Rotation"
             },
             "opened": {
               "anyOf": [

@@ -767,6 +767,11 @@ function goalMeasurements(goal) {
   } else {
     entries.push(["Target object", goal.object_id]);
     if (goal.support_id) entries.push(["Leave this support", goal.support_id]);
+    if (goal.kind === "rotate") {
+      entries.push(["Target orientation (XYZ)", `${format(goal.target_rotation)} radians`]);
+      entries.push(["Angular tolerance", `${(goal.angular_tolerance * 180 / Math.PI).toFixed(1)}°`]);
+      entries.push(["Position", `${goal.target_position ? format(goal.target_position) + " m" : "Initial object center"} ± ${format(goal.tolerance)} m`]);
+    }
     if (goal.kind === "displace") {
       entries.push([
         "Destination (X / Y / Z)",

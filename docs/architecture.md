@@ -69,7 +69,7 @@ This is bounded search over typed motion programs, supported by persistent evide
 
 ### Program operations and limits
 
-`ActionProgram.steps` contains one to 24 `MotionStep` values. The nested operations are `move_to_pose`, `gripper`, `contact_stroke`, `wait`, and `pick_place`. These are not five additional Astra tools. `pick_place` also exists independently as a top-level tool with a different argument schema.
+`ActionProgram.steps` contains one to 24 `MotionStep` values. The nested operations are `move_to_pose`, `gripper`, `contact_stroke`, `wait`, and `pick_place`. A `pick_place` step can supply `target_rotation` for a world-Z turn preserving the current flat support face; ordinary placement checks the final angle within five degrees. These are not five additional Astra tools. `pick_place` also exists independently as a top-level tool with a different argument schema.
 
 Current action execution limits include 30 simulated seconds per program, a 40 N aggregate robot contact-load limit, joint limits, and collision checks. Draft trial budgets range from three to ten and include confirmations. Per model turn, the adapter allows at most 36 experiment/read-only calls and 12 live calls, followed by a tool-free summary. The experiment budget category includes notebook writes and saving actions, so it is not synonymous with read-only operations.
 
@@ -80,6 +80,7 @@ Current action execution limits include 30 simulated seconds per program, a 40 N
 | `topple` | The target leaves its named lower support, reaches ground, and settles; the support may move |
 | `displace` | The target center reaches the requested position within tolerance and settles; a particular path, grasp, or full containment is not verified |
 | `circle` | Actual gripper motion traces the requested full circle within radial and plane tolerances |
+| `rotate` | Object reaches target XYZ orientation within angular tolerance and settles; center stays at its initial position within position tolerance unless an explicit destination is given |
 | `extract` | A lower object moves out from under an upper object, which loses lower support and lands on the named landing body; both settle |
 
 Extraction has three distinct entity roles: `object_id` is the lower extracted object, `supported_id` is the upper object, and `landing_id` is its destination support body. The lower must move at least `min_displacement` from its starting position and finish at least that far horizontally from the upper. An optional target also constrains the lower's destination. Direct manipulation of the upper is forbidden; its passive movement/drop is allowed. Unrelated objects, including the landing body, must be preserved. Extraction does not use `support_id`, and supporting contact does not establish full tray containment.

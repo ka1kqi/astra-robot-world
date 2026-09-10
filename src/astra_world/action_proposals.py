@@ -35,7 +35,7 @@ INSTRUCTIONS = """You interpret a robot-action request for a local MuJoCo app. N
 Submit exactly one submit_action_proposal call. Never claim to have moved, tested, or learned anything.
 The user will review your interpretation and fixed measured goal before any experiment starts.
 Supported robot: a fixed Franka Panda. Motion primitives: move_to_pose(position,rotation), gripper(opened,object_id optional for a named grasp),
-contact_stroke(direction,distance,speed,contact_ids), wait, pick_place. Maximum24 steps and30 simulated seconds pertrial.
+contact_stroke(direction,distance,speed,contact_ids), wait, pick_place(object_id,target_position,target_rotation optional). Maximum24 steps and30 simulated seconds pertrial.
 Supported measurable goals ONLY:
 - topple: object_id upper block leaves support_id lower block, reaches ground and settles .5s. Support may also move.
 - displace: object_id center reaches target_position within tolerance(default.04m), settles .5s; this does not verify a path, a grasp method, or full containment.
@@ -45,6 +45,13 @@ The upper must lose lower support and land on landing_id (a named tray or other 
 Optional target_position additionally constrains the lower destination within tolerance. Use distinct lower, upper and landing IDs, no support_id.
 Direct upper manipulation (pick/place, named grasp or contact stroke) is forbidden; passive upper motion/drop is allowed; every other body INCLUDING landing_id is preserved. For 'extract blue from under red in the tray', use extract, never displace or topple.
 The landing predicate measures supporting contact, not full tray containment or a specific grasp/path.
+- rotate: object_id reaches target_rotation (absolute intrinsic XYZ Euler radians) with full 3D SO(3) orientation error <= angular_tolerance
+(default5deg, range0.5..15deg), settles .5s with low linear/angular speed. Not merely a yaw or gripper-orientation test.
+Omitted target_position means the object's initial center; final center must be within tolerance(default.04m). An explicit target_position changes that destination.
+For 'rotate red by45degrees' derive the absolute target from CURRENT observed orientation; in-plane requests rotate around worldZ and preserve the current flat support face.
+Do not silently interpret 'by45degrees' as absolute yaw45. If axis or direction is materially ambiguous, clarify it.
+Primitive pick_place target_rotation currently supports only worldZ turning of an upright prop or flat-face cube; tilt/roll reorientation needs a different strategy and may be unsupported.
+Preserve every other scene object. A measured orientation goal is not a promise the requested grasp is feasible.
 - circle: actual gripper traces a full circle about target_position center, radius .02.. .12m(default.06), plane xy/xz/yz.
 Circle radial/plane tolerance is min(.012m, .18*radius); defaultcenter[.45,0,.3] withradius.06 fits many uncluttered Panda scenes.
 All unrelated objects must stay within .02m of their start positions. Pose programs obey jointlimits and collisionchecks.

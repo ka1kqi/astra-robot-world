@@ -188,3 +188,45 @@ def test_releasing_object_permits_only_residual_finger_contact(monkeypatch):
     assert checked
     assert ctl.held_id is None
     assert ctl.contact_ids == ()
+
+
+def test_rotate_cube_45_degrees_in_place():
+    from scipy.spatial.transform import Rotation
+    w = station()
+    target = [0.4, -0.12, 0.02]
+    result = pick_place(w, 'red', target, target_rotation=[0, 0, np.pi / 4])
+    assert result['ok'], result
+    actual = w.data.body('entity_red').xmat.reshape(3,3)
+    desired = Rotation.from_euler('XYZ', [0, 0, np.pi / 4]).as_matrix()
+    assert Rotation.from_matrix(desired @ actual.T).magnitude() < np.deg2rad(5)
+    np.testing.assert_allclose(w.data.body('entity_red').xpos, target, atol=.012)
+    assert result['payload']['rotation_error'] < np.deg2rad(5)
+
+
+def test_tilt_target_rejected_before_motion():
+    w = station(); before = w.data.qpos.copy()
+    result = pick_place(w, 'red', [0.4,-0.12,.02], target_rotation=[np.pi/4,0,0])
+    assert result['error_code'] == 'unsupported_rotation'
+    np.testing.assert_array_equal(w.data.qpos, before)
+
+
+def test_rotate_cube_from_nonzero_yaw():
+    from scipy.spatial.transform import Rotation
+    spec = station().spec.model_copy(deep=True)
+    spec.entities[0].rotation = [0, 0, np.pi / 4]
+    w = build_world(spec)
+    result = pick_place(w, 'red', [0.4, -.12, .02], target_rotation=[0, 0, np.pi / 2])
+    assert result['ok'], result
+    error = Rotation.from_matrix(Rotation.from_euler('XYZ', [0,0,np.pi/2]).as_matrix() @ w.data.body('entity_red').xmat.reshape(3,3).T).magnitude()
+    assert error < np.deg2rad(5)
+
+
+def test_rotate_cube_resting_on_side_face():
+    from scipy.spatial.transform import Rotation
+    spec = station().spec.model_copy(deep=True)
+    spec.entities[0].rotation = [np.pi/2, 0, 0]
+    w = build_world(spec)
+    desired = Rotation.from_euler('Z', np.pi/4).as_matrix() @ Rotation.from_euler('XYZ', [np.pi/2,0,0]).as_matrix()
+    result = pick_place(w, 'red', [0.4, -.12, .02], target_rotation=Rotation.from_matrix(desired).as_euler('XYZ'))
+    assert result['ok'], result
+    assert Rotation.from_matrix(desired @ w.data.body('entity_red').xmat.reshape(3,3).T).magnitude() < np.deg2rad(5)

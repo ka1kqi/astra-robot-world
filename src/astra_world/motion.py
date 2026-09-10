@@ -80,6 +80,7 @@ class Controller:
     def __init__(self, world, cancel=None, tick=None, status=None):
         self.world = world
         self.held_id = None
+        self.contact_ids = ()
         self.cancel = cancel or Event()
         self.tick = tick or (lambda: None)
         self.status = status or (lambda text: None)
@@ -97,7 +98,7 @@ class Controller:
             mujoco.mj_step(w.model, w.data)
             if not np.isfinite(w.data.qpos).all():
                 raise MotionError("unstable_physics", "The simulation became unstable.")
-            contact = colliding(w, w.data, self.held_id)
+            contact = colliding(w, w.data, self.held_id, self.contact_ids)
             if contact:
                 w.data.ctrl[:7] = w.arm_q
                 raise MotionError(
@@ -137,6 +138,21 @@ class Controller:
     def gripper(self, opened):
         self.world.data.ctrl[7] = 255 if opened else 0
         self.step(0.8)
+
+
+    def release(self):
+        """Opening releases the load; allow only its residual finger contacts.
+
+        Once opening starts, ordinary object/support impacts belong to the free
+        dynamics. The palm, arm, and unrelated finger contacts remain guarded.
+        """
+        released = self.held_id
+        self.held_id = None
+        self.contact_ids = (released,) if released is not None else ()
+        try:
+            self.gripper(True)
+        finally:
+            self.contact_ids = ()
 
 
 def colliding(world, scratch, held_id=None, contact_ids=()):

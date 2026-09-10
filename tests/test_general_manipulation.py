@@ -132,3 +132,59 @@ def test_deep_support_intersection_is_rejected():
         ]
     )
     assert colliding(w, w.data, "red") is not None
+
+
+def test_stack_blue_then_green_handles_release_impact_without_stopping():
+    import mujoco
+
+    w = build_world(WorldSpec(name="Three block stack", robot="panda", entities=[
+        {"id": "red_block", "asset_id": "small_box", "position": [.4, -.12, .02]},
+        {"id": "blue_block", "asset_id": "small_box", "position": [.55, -.12, .02]},
+        {"id": "green_block", "asset_id": "small_box", "position": [.4, .04, .02]},
+        {"id": "tray", "asset_id": "tray", "position": [.48, .35, .025]},
+    ]))
+    for _ in range(1000):
+        mujoco.mj_step(w.model, w.data)
+    result = pick_place(w, "blue_block", [.4, -.12, .0598922])
+    assert result["ok"], result
+    blue = w.data.body("entity_blue_block").xpos.copy()
+    result = pick_place(w, "green_block", blue + [0, 0, .04])
+    assert result["ok"], result
+    red = w.data.body("entity_red_block").xpos
+    blue = w.data.body("entity_blue_block").xpos
+    green = w.data.body("entity_green_block").xpos
+    np.testing.assert_allclose(red, [.4, -.12, .02], atol=.005)
+    np.testing.assert_allclose(blue - red, [0, 0, .04], atol=.005)
+    np.testing.assert_allclose(green - blue, [0, 0, .04], atol=.005)
+
+
+def test_releasing_object_permits_only_residual_finger_contact(monkeypatch):
+    import mujoco
+    from astra_world.motion import Controller, MotionError, colliding, solve_ik
+
+    w = station()
+    q = solve_ik(w, [.4, -.12, .025], w.arm_q)
+    w.data.qpos[:7] = q
+    w.data.qpos[7:9] = 0
+    mujoco.mj_forward(w.model, w.data)
+    ctl = Controller(w)
+    ctl.held_id = "red"
+    checked = []
+
+    def opening(seconds):
+        assert ctl.held_id is None
+        assert ctl.contact_ids == ("red",)
+        assert colliding(w, w.data, contact_ids=ctl.contact_ids) is None
+        # Releasing never permits the target to intersect the palm.
+        w.data.joint("red_joint").qpos[:3] = w.data.body("hand").xpos
+        mujoco.mj_forward(w.model, w.data)
+        assert colliding(w, w.data, contact_ids=ctl.contact_ids) is not None
+        checked.append(True)
+        raise MotionError("cancelled", "Stopped while opening")
+
+    monkeypatch.setattr(ctl, "step", opening)
+    with pytest.raises(MotionError):
+        ctl.release()
+    assert checked
+    assert ctl.held_id is None
+    assert ctl.contact_ids == ()

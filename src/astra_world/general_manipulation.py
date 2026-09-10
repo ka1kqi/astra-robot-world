@@ -78,7 +78,8 @@ def pick_place(world, object_id, target_position, cancel=None, tick=None, status
     ctl = Controller(world, cancel, tick, status)
 
     def gripper(opened):
-        return command("gripper", {"opened": opened}, lambda: ctl.gripper(opened))
+        operation = ctl.release if opened and ctl.held_id is not None else lambda: ctl.gripper(opened)
+        return command("gripper", {"opened": opened}, operation)
 
     def move(position, seconds=1.2):
         return command("move", {"position": list(position), "seconds": seconds}, lambda: ctl.move(position, seconds))
@@ -119,7 +120,6 @@ def pick_place(world, object_id, target_position, cancel=None, tick=None, status
         route = transport([target[0], target[1], height], object_id)
         move(target + [0, 0, 0.018], 1.5)
         gripper(True)
-        ctl.held_id = None
         move([target[0], target[1], height])
         stable = 0.0
         for _ in range(round(3 / world.model.opt.timestep)):

@@ -167,6 +167,7 @@ function renderTurns(turns) {
       node("p", `${label} · ${human(turn.status).toUpperCase()}`, "turn-label"),
     );
     section.append(node("p", turn.message, "user-message"));
+    if (turn.viewport) section.append(node("p", `Simulation view attached · ${human(turn.viewport.view)}`, "tool-detail"));
     for (const [index, event] of (turn.events || []).entries()) {
       let text = event.text || "";
       let cls = `event ${event.type}`;
@@ -623,11 +624,26 @@ async function updateState() {
   $("provider-dot").classList.toggle("ready", configured && connected);
   controls();
 }
+function captureViewport() {
+  const frame = $("simulation-frame");
+  if (!$("include-viewport").checked || frame.hidden || !frame.complete || !frame.naturalWidth) return null;
+  try {
+    const canvas = document.createElement("canvas");
+    const scale = Math.min(1, 960 / frame.naturalWidth, 720 / frame.naturalHeight);
+    canvas.width = Math.max(1, Math.round(frame.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(frame.naturalHeight * scale));
+    canvas.getContext("2d").drawImage(frame, 0, 0, canvas.width, canvas.height);
+    return { image: canvas.toDataURL("image/jpeg", 0.85),
+      view: frame.dataset.view || "live",
+      frame_age_ms: Math.min(86400000, Math.max(0, Date.now() - Number(frame.dataset.loadedAt || Date.now()))) };
+  } catch (_) { return null; }
+}
 $("chat-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const message = $("message").value.trim();
   if (!message || !configured || busy || pending || !connected) return;
-  if (await request("/chat", { message })) $("message").value = "";
+  const viewport = captureViewport();
+  if (await request("/chat", { message, viewport })) $("message").value = "";
 });
 $("message").addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
@@ -1141,6 +1157,8 @@ async function loadFrame() {
     frameObjectUrl = URL.createObjectURL(blob);
     const frame = $("simulation-frame");
     frame.src = frameObjectUrl;
+    frame.dataset.view = view;
+    frame.dataset.loadedAt = String(Date.now());
     if (previousUrl) URL.revokeObjectURL(previousUrl);
     frame.alt = experiment
       ? `Experiment scene copy, trial ${trial.trial_number}${trialActive(trial) ? " in progress" : " recording"}`

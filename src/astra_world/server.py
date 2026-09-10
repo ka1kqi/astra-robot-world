@@ -10,6 +10,7 @@ import os
 import re
 from .action_contracts import Identifier, Vector
 from .action_proposals import interpret_action
+from .viewport import ViewportInput
 from copy import deepcopy
 from typing import Literal
 
@@ -30,6 +31,10 @@ class ChatRequest(BaseModel):
         if not value.strip():
             raise ValueError("Message cannot be blank")
         return value.strip()
+
+
+class VisualChatRequest(ChatRequest):
+    viewport: ViewportInput | None = None
 
 
 class CreateActionRequest(ChatRequest):
@@ -153,13 +158,19 @@ def create_app(runtime, *, adapter=None):
         turn["events"].append({"type": "tool_result", "name": name, "call_id": call_id, "result": result})
         return result
 
-    async def run(turn, name=None, args=None):
+    async def run(turn, name=None, args=None, viewport=None):
+        user_message = None
         try:
             if name:
                 result = await execute(turn, name, args or {})
                 turn["status"] = "completed" if result.get("ok") else "failed"
             else:
-                history.append({"role": "user", "content": turn["message"]})
+                user_message = {"role": "user", "content": turn["message"]}
+                if viewport:
+                    user_message = viewport.message(
+                        turn["message"], responses=adapter.uses_responses
+                    )
+                history.append(user_message)
                 await adapter.run_turn(
                     history, lambda n, a: execute(turn, n, a), turn["events"].append
                 )
@@ -187,6 +198,9 @@ def create_app(runtime, *, adapter=None):
                     "text": "The action could not complete. Inspect the world state and try again.",
                 }
             )
+        finally:
+            if viewport and user_message:
+                user_message["content"] = turn["message"] + "\n[The viewport image from this earlier turn has been omitted.]"
 
     async def create_action_turn(
         turn, body, *, approved_goal=None, expected_state_token=None, action_name=None
@@ -602,7 +616,7 @@ def create_app(runtime, *, adapter=None):
             ) from None
 
     @app.post("/chat", status_code=202)
-    async def chat(body: ChatRequest):
+    async def chat(body: VisualChatRequest):
         nonlocal active
         if not adapter.configured:
             raise HTTPException(
@@ -610,7 +624,9 @@ def create_app(runtime, *, adapter=None):
                 "Live Astra is not configured. Set ASTRA_BASE_URL, ASTRA_MODEL and ASTRA_API_KEY, then restart.",
             )
         turn = new_turn(body.message, "astra")
-        active = asyncio.create_task(run(turn))
+        if body.viewport:
+            turn["viewport"] = body.viewport.model_dump(exclude={"image"})
+        active = asyncio.create_task(run(turn, viewport=body.viewport))
         return {"turn_id": turn["id"]}
 
     @app.post("/tools/{name}", status_code=202)

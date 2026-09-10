@@ -84,6 +84,10 @@ Current action execution limits include 30 simulated seconds per program, a 40 N
 
 Extraction has three distinct entity roles: `object_id` is the lower extracted object, `supported_id` is the upper object, and `landing_id` is its destination support body. The lower must move at least `min_displacement` from its starting position and finish at least that far horizontally from the upper. An optional target also constrains the lower's destination. Direct manipulation of the upper is forbidden; its passive movement/drop is allowed. Unrelated objects, including the landing body, must be preserved. Extraction does not use `support_id`, and supporting contact does not establish full tray containment.
 
+## Viewport input
+
+Chat can attach the displayed browser simulation JPEG to the user message. The browser captures the image element at send time (maximum 960 × 720), with live/experiment/replay context and frame age. The server validates inline JPEG format and dimensions and supplies the appropriate Responses or Chat Completions image part. Astra keeps structured tool observations for precise current physics; the picture is a snapshot, and a recorded or sandbox view is not live state. Image bytes stay only for the active turn and are removed on completion, failure, or cancellation; `/state` exposes attachment metadata only. No desktop capture or continuous vision stream is performed.
+
 ## Persistence and visual evidence
 
 | Data | Location | Survives restart? |

@@ -16,6 +16,8 @@ uv run python scripts/fetch_assets.py
 
 Open **http://127.0.0.1:8765**. The browser embeds actual MuJoCo rendering alongside chat, Action Lab, Stop, and manual physics controls. The default launcher uses one simulation process and a fixed port; invoking it again reuses the existing app.
 
+**Include current simulation view** is enabled in chat by default. Each message sends the displayed simulation image alongside your text, labeled as live, experiment, or action replay. Disable it for text-only requests. Images are limited to 960 × 720 pixels in the browser and are removed from conversation history after that turn; they are not written to disk. If the renderer is unavailable, chat sends text only. Vision adds API image usage and requires an image-capable configured model. The attachment is a snapshot, not a continuous feed; Astra still uses physics tools for exact current coordinates.
+
 Conversation tool calls expand to show their exact submitted parameters. Expand a trial or live execution result to inspect its ordered motion steps, then expand each step's parameters. Pick/place results also record their internal gripper, move, and transport commands. Submitted steps and completed steps are labeled separately; older calls may lack recorded arguments. Expanded sections remain open while the conversation updates. Refresh an already-open browser tab after frontend updates; HTML, JavaScript, and CSS responses disable caching.
 
 ```sh

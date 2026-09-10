@@ -9,3 +9,8 @@ artifacts/
 .env
 .env.*
 !.env.example
+
+assets/custom/
+scenarios/
+
+actions/

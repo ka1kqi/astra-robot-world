@@ -1,6 +1,19 @@
 # General-world expansion
 
-Status: design proposal responding to the user's request for many assets and situations. The working sorting demo is implemented and remains the regression fixture. Priority between tabletop manipulation and whole environments is being clarified.
+Status: initial expansion implemented. User selected many objects/tasks with the Panda: stacking, packing, sorting, obstacles. The architecture sections below retain the longer-term design; they are not a claim that every proposed interface is implemented.
+
+## Implemented and verified
+
+- 28 procedural/composite catalog assets; OBJ/STL importer with centered visuals, convex collision hulls, and supplied attribution. No external object dataset bundled.
+- Validated WorldSpec with up to 64 entities, Panda or no robot, physical parameters, and geometry-aware scaling restrictions.
+- Search/describe/create/observe/add_entity/simulate/save/load/reset tools. Insertion preserves current named joint state and rejects detected penetrations transactionally.
+- General pick_place physically tested with small_box, block, and short_cylinder in upright, ground-level setups. One skill supports stacking and tray packing; physical obstacle regression forces an outer route.
+- General scenes pause between actions; snapshot persistence includes current physics state. Original sorting preset and retry remain separate, preserving the four-prompt demo.
+- Asset browsing and task prompts are available in the browser. Actual rendering remains native MuJoCo.
+- Live Astra trials passed: custom stacking, two-shape tray packing, state-preserving wall insertion, and robot-free ball drop. Original live four-prompt demo passed again after expansion.
+- Native Mac smoke passed scene swaps, simulate/reset, physical stacking, and wall insertion. Full suite: 82 passed, two upstream deprecation warnings.
+
+Not yet implemented: multiple robots, general RobotAdapter interface, push skill, arbitrary scene removal/movement patches, declarative goal evaluator, arbitrary grasp generation, or global motion planning. Initial scene layout overlap is not comprehensively prevalidated.
 
 ## Intended change
 

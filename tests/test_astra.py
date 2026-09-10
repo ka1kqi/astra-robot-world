@@ -74,47 +74,31 @@ def test_provider_receives_actual_tool_result_and_preserves_conversation():
     asyncio.run(run())
 
 
-def test_loop_limit_bounds_physics_calls():
+@pytest.mark.parametrize("tool_name,limit", [("observe_world", 36), ("pick_place", 12)])
+def test_loop_budget_reserves_a_tool_free_summary(tool_name, limit):
+    requests = []
     def handler(request):
-        return httpx.Response(
-            200,
-            json={
-                "choices": [
-                    {
-                        "message": {
-                            "role": "assistant",
-                            "content": None,
-                            "tool_calls": [
-                                {
-                                    "id": "x",
-                                    "type": "function",
-                                    "function": {
-                                        "name": "observe_world",
-                                        "arguments": "{}",
-                                    },
-                                }
-                            ],
-                        }
-                    }
-                ]
-            },
-        )
-
+        body = json.loads(request.content)
+        requests.append(body)
+        message = {"role": "assistant", "content": "The last action completed; the tool budget is reached."}
+        if body.get("tools"):
+            message = {"role": "assistant", "content": None, "tool_calls": [{
+                "id": str(len(requests)), "type": "function",
+                "function": {"name": tool_name, "arguments": "{}"},
+            }]}
+        return httpx.Response(200, json={"choices": [{"message": message}]})
     async def run():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            adapter = AstraAdapter(
-                "https://example.test/v1", "model", "key", client=client
-            )
+            adapter = AstraAdapter("https://example.test/v1", "model", "key", client=client)
             calls = []
-
             async def execute(name, args):
                 calls.append(name)
                 return {"ok": True, "scene_revision": 1}
-
-            with pytest.raises(ProviderError, match="12"):
-                await adapter.run_turn([], execute)
-            assert len(calls) == 12
-
+            answer = await adapter.run_turn([], execute)
+            assert "last action completed" in answer
+            assert len(calls) == limit
+            assert requests[-1].get("tools") == []
+            assert requests[-1].get("tool_choice") == "none"
     asyncio.run(run())
 
 
@@ -366,4 +350,78 @@ def test_astra_responses_cancellation_keeps_valid_function_output():
             assert history[-1]["call_id"] == "cancelled_call"
             assert json.loads(history[-1]["output"])["error_code"] == "cancelled"
 
+    asyncio.run(run())
+
+
+def test_general_world_tools_expose_validated_scene_schema():
+    from astra_world.astra import TOOLS
+
+    functions = {item["function"]["name"]: item["function"] for item in TOOLS}
+    assert {
+        "search_assets",
+        "describe_asset",
+        "create_world",
+        "simulate",
+        "reset_world",
+        "save_scenario",
+        "load_scenario",
+    } <= functions.keys()
+    scene = functions["create_world"]["parameters"]
+    assert scene["properties"]["entities"]["maxItems"] == 64
+    assert scene["properties"]["robot"]["enum"] == ["none", "panda"]
+    assert (
+        functions["simulate"]["parameters"]["properties"]["duration"]["maximum"] == 20
+    )
+
+
+def test_generic_pick_place_schema_requires_object_and_target_center():
+    from astra_world.astra import TOOLS
+
+    function = next(
+        item["function"] for item in TOOLS if item["function"]["name"] == "pick_place"
+    )
+    assert function["parameters"]["required"] == ["object_id", "target_position"]
+    assert function["parameters"]["properties"]["target_position"]["minItems"] == 3
+
+
+def test_add_entity_uses_entity_contract_and_vector_schema():
+    from astra_world.astra import TOOLS
+    from astra_world.world_spec import EntitySpec
+
+    function = next(
+        item["function"] for item in TOOLS if item["function"]["name"] == "add_entity"
+    )
+    schema = function["parameters"]
+    assert schema["required"] == EntitySpec.model_json_schema()["required"]
+    assert schema["properties"]["position"]["items"]["type"] == "number"
+    assert schema["properties"]["position"]["minItems"] == 3
+    assert schema["additionalProperties"] is False
+
+
+def test_experiment_calls_do_not_consume_live_budget_and_summary_cannot_execute():
+    requests = 0
+    def handler(request):
+        nonlocal requests
+        requests += 1
+        body = json.loads(request.content)
+        if requests == 1:
+            names = ["write_action_note"] * 16 + ["pick_place"] * 12
+        else:
+            assert body['tools'] == [] and body['tool_choice'] == 'none'
+            names = ['pick_place']  # Even a noncompliant provider cannot run it.
+        calls = [{"id": f"{requests}-{i}", "type": "function", "function": {"name": name, "arguments": "{}"}} for i, name in enumerate(names)]
+        return httpx.Response(200, json={"choices": [{"message": {"role": "assistant", "content": None, "tool_calls": calls}}]})
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            adapter = AstraAdapter('https://example.test/v1', 'model', 'key', client=client)
+            called = []
+            history = []
+            async def execute(name, args):
+                called.append(name)
+                return {'ok': True}
+            answer = await adapter.run_turn(history, execute)
+            assert called.count('write_action_note') == 16
+            assert called.count('pick_place') == 12
+            assert 'No further tools were run' in answer
+            assert not any(item.get('role') == 'developer' for item in history)
     asyncio.run(run())

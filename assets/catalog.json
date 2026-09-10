@@ -1,0 +1,2187 @@
+{
+  "schema_version": 1,
+  "units": "metres",
+  "geometry_angles": "degrees",
+  "assets": [
+    {
+      "id": "box",
+      "description": "Medium solid cube for stacking and collisions",
+      "tags": [
+        "block",
+        "stack",
+        "push"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.12,
+        0.12,
+        0.12
+      ],
+      "default_mass": 0.5,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.06,
+            0.06,
+            0.06
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "small_box",
+      "description": "Small cube for sorting and compact stacks",
+      "tags": [
+        "block",
+        "stack",
+        "sort"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.04,
+        0.04,
+        0.04
+      ],
+      "default_mass": 0.05,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.02,
+            0.02,
+            0.02
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "capabilities": [
+        "pinch_candidate"
+      ],
+      "grasp_hint": {
+        "approach": "downward",
+        "target": "center",
+        "verified": false
+      }
+    },
+    {
+      "id": "large_box",
+      "description": "Large solid cube for obstacles and heavy stacks",
+      "tags": [
+        "block",
+        "obstacle",
+        "stack"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "default_mass": 3,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.125,
+            0.125,
+            0.125
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ball",
+      "description": "Solid round sphere for rolling and bouncing",
+      "tags": [
+        "round",
+        "roll",
+        "projectile"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "default_mass": 0.3,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "sphere",
+          "size": [
+            0.05
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sphere",
+      "description": "Solid round sphere for rolling and bouncing",
+      "tags": [
+        "round",
+        "roll",
+        "projectile"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.18,
+        0.18,
+        0.18
+      ],
+      "default_mass": 0.3,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "sphere",
+          "size": [
+            0.09
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cylinder",
+      "description": "Upright solid cylinder for rolling and balancing",
+      "tags": [
+        "round",
+        "roll",
+        "balance"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.09,
+        0.09,
+        0.18
+      ],
+      "default_mass": 0.5,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "cylinder",
+          "size": [
+            0.045,
+            0.09
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "capsule",
+      "description": "Rounded rod for rolling and contact experiments",
+      "tags": [
+        "round",
+        "rod",
+        "roll"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.07,
+        0.07,
+        0.24
+      ],
+      "default_mass": 0.3,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "capsule",
+          "size": [
+            0.035,
+            0.085
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wall",
+      "description": "Solid upright barrier",
+      "tags": [
+        "obstacle",
+        "barrier",
+        "fixed"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        1.2,
+        0.06,
+        0.5
+      ],
+      "default_mass": 20,
+      "default_fixed": true,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.6,
+            0.03,
+            0.25
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "platform",
+      "description": "Raised flat support platform",
+      "tags": [
+        "support",
+        "floor",
+        "fixed"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.7,
+        0.5,
+        0.08
+      ],
+      "default_mass": 10,
+      "default_fixed": true,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.35,
+            0.25,
+            0.04
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "domino",
+      "description": "Slender upright block for chain reactions",
+      "tags": [
+        "block",
+        "chain",
+        "fall"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.025,
+        0.07,
+        0.16
+      ],
+      "default_mass": 0.12,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.0125,
+            0.035,
+            0.08
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "beam",
+      "description": "Long square beam for bridges and balancing",
+      "tags": [
+        "bridge",
+        "rod",
+        "balance"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.6,
+        0.055,
+        0.055
+      ],
+      "default_mass": 1,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.0275,
+            0.0275
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "plank",
+      "description": "Thin plank for ramps bridges and seesaws",
+      "tags": [
+        "bridge",
+        "flat",
+        "balance"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.55,
+        0.18,
+        0.025
+      ],
+      "default_mass": 0.7,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.275,
+            0.09,
+            0.0125
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pedestal",
+      "description": "Tall solid support pedestal",
+      "tags": [
+        "support",
+        "obstacle",
+        "fixed"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.16,
+        0.16,
+        0.35
+      ],
+      "default_mass": 5,
+      "default_fixed": true,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.08,
+            0.08,
+            0.175
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "peg",
+      "description": "Short upright cylindrical pin",
+      "tags": [
+        "pin",
+        "obstacle",
+        "insertion"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.05,
+        0.05,
+        0.16
+      ],
+      "default_mass": 0.2,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "cylinder",
+          "size": [
+            0.025,
+            0.08
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bin",
+      "description": "Open rectangular bin with solid floor and four walls",
+      "tags": [
+        "container",
+        "hollow",
+        "sorting",
+        "storage"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.36,
+        0.28,
+        0.18
+      ],
+      "default_mass": 1.2,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.18,
+            0.14,
+            0.0075
+          ],
+          "pos": [
+            0,
+            0,
+            -0.08249999999999999
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.0075,
+            0.14,
+            0.09
+          ],
+          "pos": [
+            -0.1725,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.0075,
+            0.14,
+            0.09
+          ],
+          "pos": [
+            0.1725,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.16499999999999998,
+            0.0075,
+            0.09
+          ],
+          "pos": [
+            0,
+            -0.1325,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.16499999999999998,
+            0.0075,
+            0.09
+          ],
+          "pos": [
+            0,
+            0.1325,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tray",
+      "description": "Shallow open tray with raised edges",
+      "tags": [
+        "container",
+        "hollow",
+        "sorting",
+        "storage"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.4,
+        0.3,
+        0.05
+      ],
+      "default_mass": 0.6,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.2,
+            0.15,
+            0.005
+          ],
+          "pos": [
+            0,
+            0,
+            -0.02
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.005,
+            0.15,
+            0.025
+          ],
+          "pos": [
+            -0.195,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.005,
+            0.15,
+            0.025
+          ],
+          "pos": [
+            0.195,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.19,
+            0.005,
+            0.025
+          ],
+          "pos": [
+            0,
+            -0.145,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.19,
+            0.005,
+            0.025
+          ],
+          "pos": [
+            0,
+            0.145,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "crate",
+      "description": "Open topped crate approximated by floor and four wooden walls",
+      "tags": [
+        "container",
+        "hollow",
+        "sorting",
+        "storage"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "default_mass": 2,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.15,
+            0.15,
+            0.01
+          ],
+          "pos": [
+            0,
+            0,
+            -0.13999999999999999
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.01,
+            0.15,
+            0.15
+          ],
+          "pos": [
+            -0.13999999999999999,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.01,
+            0.15,
+            0.15
+          ],
+          "pos": [
+            0.13999999999999999,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.13,
+            0.01,
+            0.15
+          ],
+          "pos": [
+            0,
+            -0.13999999999999999,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.13,
+            0.01,
+            0.15
+          ],
+          "pos": [
+            0,
+            0.13999999999999999,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ramp",
+      "description": "Sloped rectangular plate at 20 degrees; not a wedge",
+      "tags": [
+        "slope",
+        "ramp",
+        "roll",
+        "fixed"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.5364884719398788,
+        0.36,
+        0.21972205888595175
+      ],
+      "default_mass": 5,
+      "default_fixed": true,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.28,
+            0.18,
+            0.015
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            -20,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "table",
+      "description": "Four legged table with a flat top",
+      "tags": [
+        "furniture",
+        "support",
+        "fixed"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.9,
+        0.6,
+        0.7
+      ],
+      "default_mass": 15,
+      "default_fixed": true,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.45,
+            0.3,
+            0.025
+          ],
+          "pos": [
+            0,
+            0,
+            0.325
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.025,
+            0.025,
+            0.325
+          ],
+          "pos": [
+            -0.395,
+            -0.245,
+            -0.025
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.025,
+            0.025,
+            0.325
+          ],
+          "pos": [
+            -0.395,
+            0.245,
+            -0.025
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.025,
+            0.025,
+            0.325
+          ],
+          "pos": [
+            0.395,
+            -0.245,
+            -0.025
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.025,
+            0.025,
+            0.325
+          ],
+          "pos": [
+            0.395,
+            0.245,
+            -0.025
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pallet",
+      "description": "Slatted pallet with two deck levels and three runners",
+      "tags": [
+        "support",
+        "storage",
+        "slatted"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.6,
+        0.45,
+        0.12
+      ],
+      "default_mass": 3,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.025,
+            0.015
+          ],
+          "pos": [
+            0,
+            -0.2,
+            0.045
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.025,
+            0.015
+          ],
+          "pos": [
+            0,
+            -0.1,
+            0.045
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.025,
+            0.015
+          ],
+          "pos": [
+            0,
+            0,
+            0.045
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.025,
+            0.015
+          ],
+          "pos": [
+            0,
+            0.1,
+            0.045
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.025,
+            0.015
+          ],
+          "pos": [
+            0,
+            0.2,
+            0.045
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.025,
+            0.015
+          ],
+          "pos": [
+            0,
+            -0.2,
+            -0.045
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.025,
+            0.015
+          ],
+          "pos": [
+            0,
+            0,
+            -0.045
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.025,
+            0.015
+          ],
+          "pos": [
+            0,
+            0.2,
+            -0.045
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.035,
+            0.225,
+            0.03
+          ],
+          "pos": [
+            -0.23,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.035,
+            0.225,
+            0.03
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.035,
+            0.225,
+            0.03
+          ],
+          "pos": [
+            0.23,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shelf",
+      "description": "Open front two level shelving frame",
+      "tags": [
+        "furniture",
+        "storage",
+        "support",
+        "fixed"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.6,
+        0.3,
+        0.8
+      ],
+      "default_mass": 12,
+      "default_fixed": true,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.15,
+            0.015
+          ],
+          "pos": [
+            0,
+            0,
+            -0.385
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.15,
+            0.015
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.3,
+            0.15,
+            0.015
+          ],
+          "pos": [
+            0,
+            0,
+            0.385
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.015,
+            0.15,
+            0.4
+          ],
+          "pos": [
+            -0.285,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.015,
+            0.15,
+            0.4
+          ],
+          "pos": [
+            0.285,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bottle",
+      "description": "Solid bottle approximation with cylindrical body and neck",
+      "tags": [
+        "vessel",
+        "solid",
+        "upright"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.09,
+        0.09,
+        0.24
+      ],
+      "default_mass": 0.3,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "cylinder",
+          "size": [
+            0.045,
+            0.09
+          ],
+          "pos": [
+            0,
+            0,
+            -0.03
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "cylinder",
+          "size": [
+            0.02,
+            0.03
+          ],
+          "pos": [
+            0,
+            0,
+            0.09
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mug",
+      "description": "Faceted open cup with rectangular handle",
+      "tags": [
+        "container",
+        "hollow",
+        "vessel"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.135,
+        0.09000000000000002,
+        0.1
+      ],
+      "default_mass": 0.25,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "cylinder",
+          "size": [
+            0.045,
+            0.005000000000000001
+          ],
+          "pos": [
+            -0.022499999999999992,
+            0,
+            -0.045
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            0.018500000000000003,
+            0.0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            0.01300704155516199,
+            0.020499999999999994,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            30.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            -0.0019999999999999914,
+            0.035507041555161975,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            60.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            -0.02249999999999999,
+            0.040999999999999995,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            90.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            -0.04299999999999998,
+            0.03550704155516198,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            120.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            -0.058007041555161974,
+            0.020499999999999994,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            150.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            -0.06349999999999999,
+            5.021051876504148e-18,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            180.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            -0.05800704155516198,
+            -0.020499999999999987,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            210.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            -0.04300000000000001,
+            -0.03550704155516197,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            240.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            -0.0225,
+            -0.040999999999999995,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            270.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            -0.0019999999999999914,
+            -0.035507041555161975,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            300.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.012057713659400521,
+            0.05
+          ],
+          "pos": [
+            0.013007041555161976,
+            -0.020500000000000015,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            330.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.025,
+            0.009,
+            0.009
+          ],
+          "pos": [
+            0.04250000000000001,
+            0,
+            -0.028
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.025,
+            0.009,
+            0.009
+          ],
+          "pos": [
+            0.04250000000000001,
+            0,
+            0.028
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.009,
+            0.009,
+            0.028
+          ],
+          "pos": [
+            0.058499999999999996,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bowl",
+      "description": "Shallow faceted open bowl with vertical walls",
+      "tags": [
+        "container",
+        "hollow",
+        "vessel"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.22000000000000003,
+        0.22000000000000003,
+        0.065
+      ],
+      "default_mass": 0.25,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "cylinder",
+          "size": [
+            0.11,
+            0.0032500000000000003
+          ],
+          "pos": [
+            0.0,
+            0,
+            -0.02925
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            0.106,
+            0.0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            0.0917986928011505,
+            0.05299999999999999,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            30.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            0.05300000000000001,
+            0.0917986928011505,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            60.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            6.4906280354809715e-18,
+            0.106,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            90.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            -0.05299999999999998,
+            0.0917986928011505,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            120.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            -0.0917986928011505,
+            0.05299999999999999,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            150.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            -0.106,
+            1.2981256070961943e-17,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            180.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            -0.09179869280115051,
+            -0.05299999999999998,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            210.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            -0.05300000000000005,
+            -0.09179869280115047,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            240.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            -1.9471884106442913e-17,
+            -0.106,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            270.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            0.05300000000000001,
+            -0.0917986928011505,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            300.0
+          ]
+        },
+        {
+          "type": "box",
+          "size": [
+            0.004,
+            0.029474411167423498,
+            0.0325
+          ],
+          "pos": [
+            0.09179869280115047,
+            -0.05300000000000005,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            330.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "puck",
+      "description": "Square low profile slider for pushing experiments",
+      "tags": [
+        "slide",
+        "flat",
+        "push"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.1,
+        0.1,
+        0.025
+      ],
+      "default_mass": 0.25,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.05,
+            0.05,
+            0.0125
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wheel",
+      "description": "Solid disk with cylinder axis along local y; no axle",
+      "tags": [
+        "round",
+        "roll",
+        "disk"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.2,
+        0.05,
+        0.2
+      ],
+      "default_mass": 0.6,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "cylinder",
+          "size": [
+            0.1,
+            0.025
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            90,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "block",
+      "description": "Small rectangular block for parallel jaw pinch trials",
+      "tags": [
+        "small",
+        "grasp",
+        "sort"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.05,
+        0.035,
+        0.04
+      ],
+      "default_mass": 0.05,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "box",
+          "size": [
+            0.025,
+            0.0175,
+            0.02
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "capabilities": [
+        "pinch_candidate"
+      ],
+      "grasp_hint": {
+        "approach": "downward",
+        "target": "center",
+        "verified": false
+      }
+    },
+    {
+      "id": "short_cylinder",
+      "description": "Small upright cylinder for parallel jaw pinch trials",
+      "tags": [
+        "small",
+        "grasp",
+        "sort"
+      ],
+      "source": "procedural",
+      "license": "project-authored",
+      "readiness": "procedural",
+      "origin": "bbox_center",
+      "bounds": [
+        0.04,
+        0.04,
+        0.04
+      ],
+      "default_mass": 0.05,
+      "default_fixed": false,
+      "geometries": [
+        {
+          "type": "cylinder",
+          "size": [
+            0.02,
+            0.02
+          ],
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "euler": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "capabilities": [
+        "pinch_candidate"
+      ],
+      "grasp_hint": {
+        "approach": "downward",
+        "target": "center",
+        "verified": false
+      }
+    }
+  ]
+}

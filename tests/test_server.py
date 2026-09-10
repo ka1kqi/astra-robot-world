@@ -22,9 +22,32 @@ class Runtime:
         return {"ok": True, "scene_revision": 1}
 
 
+def test_tool_arguments_visible_before_completion_and_linked_to_result():
+    runtime = Runtime()
+    args = {"object_id": "green", "target_position": [0.4, -0.12, 0.06]}
+    with TestClient(create_app(runtime, adapter=AstraAdapter("", "", "")), base_url="http://127.0.0.1") as client:
+        client.post("/tools/pick_place", json=args).raise_for_status()
+        for _ in range(50):
+            events = client.get("/state").json()["turns"][-1]["events"]
+            if events:
+                break
+            time.sleep(.01)
+        assert events[0]["arguments"] == args
+        assert events[0]["call_id"]
+        runtime.pending.set_result({"ok": True, "payload": {"route": "direct"}})
+        for _ in range(50):
+            events = client.get("/state").json()["turns"][-1]["events"]
+            if len(events) == 2:
+                break
+            time.sleep(.01)
+        assert events[1]["call_id"] == events[0]["call_id"]
+        for path in ("/", "/app.js", "/styles.css"):
+            assert client.get(path).headers["cache-control"] == "no-store"
+
+
 def test_manual_action_busy_stop_and_missing_provider():
     runtime = Runtime()
-    with TestClient(create_app(runtime, adapter=AstraAdapter("", "", ""))) as client:
+    with TestClient(create_app(runtime, adapter=AstraAdapter("", "", "")), base_url="http://127.0.0.1") as client:
         state = client.get("/state").json()
         assert state["provider"]["configured"] is False
         assert (
@@ -61,7 +84,7 @@ def test_tool_failure_visible_and_static_ui_served():
             "detail": "Nothing to retry.",
         }
     )
-    with TestClient(create_app(runtime, adapter=AstraAdapter("", "", ""))) as client:
+    with TestClient(create_app(runtime, adapter=AstraAdapter("", "", "")), base_url="http://127.0.0.1") as client:
         assert client.get("/").status_code == 200
         assert client.get("/app.js").status_code == 200
         assert client.post("/tools/retry_last_task", json={}).status_code == 202
@@ -118,7 +141,7 @@ def test_live_turn_preserves_failed_action_status():
         "fixture",
         client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
-    with TestClient(create_app(runtime, adapter=adapter)) as client:
+    with TestClient(create_app(runtime, adapter=adapter), base_url="http://127.0.0.1") as client:
         assert (
             client.post("/chat", json={"message": "Sort red blocks"}).status_code == 202
         )
@@ -170,7 +193,7 @@ def test_malformed_astra_arguments_are_visible_and_fail_the_turn():
         "fixture",
         client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
-    with TestClient(create_app(runtime, adapter=adapter)) as client:
+    with TestClient(create_app(runtime, adapter=adapter), base_url="http://127.0.0.1") as client:
         assert (
             client.post("/chat", json={"message": "Sort red blocks"}).status_code == 202
         )
@@ -186,3 +209,67 @@ def test_malformed_astra_arguments_are_visible_and_fail_the_turn():
             for event in turn["events"]
         )
         assert turn["events"][-1]["text"] == "I could not perform that action."
+
+
+def test_asset_search_is_read_only_and_available_during_action():
+    class AssetRuntime(Runtime):
+        def submit(self, name, args):
+            if name == "search_assets":
+                result = Future()
+                result.set_result(
+                    {
+                        "ok": True,
+                        "scene_revision": 1,
+                        "payload": {
+                            "assets": [{"id": "ball", "name": "Ball"}],
+                            "count": 1,
+                        },
+                    }
+                )
+                return result
+            return super().submit(name, args)
+
+    with TestClient(
+        create_app(AssetRuntime(), adapter=AstraAdapter("", "", "")),
+        base_url="http://127.0.0.1",
+    ) as client:
+        assert client.post("/tools/build_sorting_station", json={}).status_code == 202
+        response = client.get("/assets?query=ball")
+        assert response.status_code == 200
+        assert response.json()["payload"]["assets"][0]["id"] == "ball"
+        assert len(client.get("/state").json()["turns"]) == 1
+
+
+def test_embedded_frame_and_action_creation_validation():
+    runtime = Runtime()
+    runtime.frame = lambda: b"jpeg-frame"
+    with TestClient(create_app(runtime, adapter=AstraAdapter("", "", "")), base_url="http://127.0.0.1") as client:
+        response = client.get("/frame.jpg")
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "image/jpeg"
+        assert response.content == b"jpeg-frame"
+        assert client.get("/actions").json()["payload"]["actions"] == []
+        assert (
+            client.post(
+                "/actions/create",
+                json={
+                    "message": "Topple it",
+                    "target_id": "green",
+                    "support_id": "red",
+                    "trial_budget": 5,
+                },
+            ).status_code
+            == 503
+        )
+        assert (
+            client.post(
+                "/actions/create",
+                json={
+                    "message": "Topple it",
+                    "target_id": "green",
+                    "support_id": "red",
+                    "trial_budget": 100,
+                },
+            ).status_code
+            == 422
+        )

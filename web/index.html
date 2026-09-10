@@ -3,152 +3,425 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Astra · Robot World</title>
+    <meta name="theme-color" content="#eef2f6" />
+    <title>Astra Robot World</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <header>
+    <header class="app-header">
       <a class="brand" href="/" aria-label="Astra Robot World home"
-        ><span class="mark" aria-hidden="true">a<span>↗</span></span
-        ><span>astra <small>ROBOT WORLD</small></span></a
+        ><span class="brand-mark" aria-hidden="true">a↗</span
+        ><span>Astra Robot World</span></a
       >
-      <div class="local">
-        <i></i> Local simulation <span class="divider">/</span> Panda arm
+      <a href="/architecture.html" class="small">Architecture</a>
+      <div class="connection">
+        <span class="status-dot" id="connection-dot"></span
+        ><span id="connection-label">Connecting</span
+        ><span class="local-label">LOCAL WORKSPACE</span>
       </div>
     </header>
     <main>
-      <section class="workspace" aria-labelledby="title">
-        <div class="intro">
-          <p class="eyebrow">LANGUAGE → ACTION</p>
-          <h1 id="title">Give your words<br />a world to move.</h1>
-          <p>
-            Build a station. Give the robot a task.<br />Change the scene and
-            watch it adapt in the native viewer.
-          </p>
+      <section class="world-column" aria-labelledby="world-title">
+        <div class="workspace-heading">
+          <div>
+            <p class="eyebrow">YOUR PHYSICS WORKSPACE</p>
+            <h1 id="world-title">A world you can move.</h1>
+          </div>
+          <button id="open-action" class="primary" type="button">
+            ＋ Create action
+          </button>
         </div>
-        <div class="conversation-head">
-          <h2>Conversation</h2>
-          <span id="action-status" role="status">Connecting…</span>
-        </div>
-        <div
-          id="transcript"
-          class="transcript"
-          aria-live="polite"
-          aria-relevant="additions text"
+        <section
+          class="viewport-panel"
+          aria-label="Simulation and experiment preview"
         >
-          <div class="empty">
-            <p>One arm. A world of possibilities.</p>
-            <span>Start with the sorting station below.</span>
-          </div>
-        </div>
-        <div class="prompts" aria-label="Demo prompts">
-          <button
-            type="button"
-            data-prompt="Build a sorting station with colored blocks and two bins."
-          >
-            <span>01</span> Build a sorting station</button
-          ><button
-            type="button"
-            data-prompt="Put the red blocks in the left bin."
-          >
-            <span>02</span> Sort the red blocks</button
-          ><button
-            type="button"
-            data-prompt="Now add an obstacle between the robot and that bin."
-          >
-            <span>03</span> Add an obstacle</button
-          ><button type="button" data-prompt="Try again.">
-            <span>04</span> Try again
-          </button>
-        </div>
-        <form id="chat-form">
-          <label class="sr-only" for="message">Message Astra</label
-          ><textarea
-            id="message"
-            rows="2"
-            maxlength="8000"
-            placeholder="Tell Astra what to build or move…"
-          ></textarea>
-          <div class="composer-footer">
-            <span id="composer-hint"
-              >Live model configuration is checked on startup.</span
-            ><button class="primary" id="send" type="submit">
-              Run <span aria-hidden="true">↗</span>
+          <div class="viewport-toolbar">
+            <span class="live-badge" id="view-badge"><i></i> LIVE WORLD</span
+            ><span id="world-kind">MuJoCo simulation</span
+            ><button
+              id="fullscreen"
+              class="icon-button"
+              type="button"
+              aria-label="Expand simulation"
+              title="Expand simulation"
+            >
+              ⛶
             </button>
           </div>
-        </form>
-        <p id="error" role="alert"></p>
+          <div class="view-switch" role="group" aria-label="Simulation view">
+            <button id="view-live" type="button" aria-pressed="true">
+              Live world
+            </button>
+            <button id="view-experiment" type="button" aria-pressed="false">
+              Experiment preview
+            </button>
+            <button id="view-action" type="button" aria-pressed="false" disabled
+              title="Available after the next live robot action is recorded">
+              Replay last action
+            </button>
+            <label class="follow-label"
+              ><input id="follow-trials" type="checkbox" checked /> Follow new
+              trials</label
+            >
+          </div>
+          <div class="viewport" id="viewport">
+            <img
+              id="simulation-frame"
+              alt="Live rendered MuJoCo simulation of the current scene"
+              hidden
+            />
+            <div id="frame-placeholder" class="frame-placeholder">
+              <span class="view-symbol" aria-hidden="true">⌗</span
+              ><strong id="frame-message">Connecting to your world</strong>
+              <p id="frame-detail">The live simulation will appear here.</p>
+            </div>
+            <div class="viewport-caption">
+              <span id="frame-status">WAITING FOR FRAME</span
+              ><span id="view-caption">MuJoCo · live scene</span>
+            </div>
+          </div>
+          <section
+            id="experiment-preview"
+            class="experiment-preview"
+            aria-label="Experiment playback"
+            hidden
+          >
+            <div class="section-heading">
+              <strong id="preview-title">No recorded trials yet</strong>
+              <span class="sandbox-badge" id="preview-state">SCENE COPY</span>
+            </div>
+            <p id="preview-result" class="small" role="status">
+              Start an experiment to watch the robot test a motion.
+            </p>
+            <p id="preview-hypothesis" class="preview-hypothesis"></p>
+            <div class="replay-controls">
+              <label for="trial-select" class="sr-only"
+                >Choose a trial recording</label
+              >
+              <select id="trial-select">
+                <option value="">No recordings yet</option>
+              </select>
+              <button id="replay-toggle" type="button" disabled>
+                Play replay
+              </button>
+            </div>
+            <div class="replay-timeline">
+              <label for="replay-frame" class="sr-only">Replay frame</label>
+              <input
+                id="replay-frame"
+                type="range"
+                min="0"
+                max="0"
+                value="0"
+                disabled
+              />
+              <span id="replay-position" class="telemetry">0 frames</span>
+            </div>
+            <p class="small" id="replay-description">
+              Trials run in a scene copy. Recordings clear on restart;
+              experiment notes stay saved.
+            </p>
+          </section>
+          <div class="simulation-controls">
+            <div class="step-controls">
+              <button data-tool="simulate" type="button">
+                <span aria-hidden="true">▷</span> Step 2 s</button
+              ><button data-tool="reset_world" type="button">
+                <span aria-hidden="true">↺</span> Reset
+              </button>
+            </div>
+            <span id="simulation-time" class="telemetry">t 0.00 s</span
+            ><button id="stop" class="stop" type="button">
+              <span aria-hidden="true">■</span> Stop motion
+            </button>
+          </div>
+        </section>
+        <div class="world-metadata">
+          <div>
+            <span>Scene</span><strong id="scene-name">Connecting…</strong>
+          </div>
+          <div><span>Robot</span><strong id="robot-name">—</strong></div>
+          <div><span>Entities</span><strong id="object-count">—</strong></div>
+          <div><span>Revision</span><strong id="revision">—</strong></div>
+        </div>
+        <section class="scene-panel">
+          <div class="section-heading">
+            <h2>In this scene</h2>
+            <span class="small">Positions in meters</span>
+          </div>
+          <div id="entity-list" class="entity-list">
+            <p class="small">Waiting for scene objects…</p>
+          </div>
+        </section>
+        <details class="utility-panel">
+          <summary>
+            Scene tools <span>Assets &amp; manual controls</span>
+          </summary>
+          <div class="utility-content">
+            <section>
+              <h2>Asset library</h2>
+              <form id="asset-search">
+                <label class="sr-only" for="asset-query"
+                  >Search scene assets</label
+                ><input
+                  id="asset-query"
+                  type="search"
+                  maxlength="200"
+                  placeholder="Search ramps, blocks, furniture…"
+                /><button type="submit" aria-label="Search assets">↗</button>
+              </form>
+              <div id="asset-results">
+                <p class="small">Search the local catalog for scene objects.</p>
+              </div>
+            </section>
+            <section>
+              <h2>Sorting station</h2>
+              <p class="small">Direct physics controls. No model request.</p>
+              <div class="manual-grid">
+                <button data-tool="build_sorting_station" type="button">
+                  Build station</button
+                ><button data-tool="sort_blocks" type="button">
+                  Sort red → left</button
+                ><button data-tool="add_obstacle" type="button">
+                  Add obstacle</button
+                ><button data-tool="retry_last_task" type="button">
+                  Reset &amp; retry
+                </button>
+              </div>
+              <p class="small">
+                Retry restores pre-sort blocks and keeps the obstacle.
+              </p>
+              <details class="state-details">
+                <summary>Inspect world state</summary>
+                <pre id="world-state">Waiting for simulation…</pre>
+              </details>
+            </section>
+          </div>
+        </details>
+        <p class="world-note">
+          Real contact. Real gravity. Every motion runs in the simulation above.
+        </p>
       </section>
-      <aside>
-        <section class="world-panel">
-          <div class="panel-title">
-            <h2>The physical world</h2>
-            <span class="tag">NATIVE VIEWER</span>
+      <aside class="assistant-panel" aria-label="Astra assistant and actions">
+        <div class="assistant-heading">
+          <div class="assistant-avatar" aria-hidden="true">a</div>
+          <div>
+            <h2>Astra</h2>
+            <span id="action-status" role="status">Connecting…</span>
           </div>
-          <div class="world-illustration" aria-hidden="true">
-            <div class="tabletop">
-              <div class="bin left">L</div>
-              <div class="bin right">R</div>
-              <div class="block red"></div>
-              <div class="block blue"></div>
-              <div class="block green"></div>
-              <div class="arm-base"></div>
-              <div class="arm-link"></div>
-              <div class="arm-hand"></div>
-            </div>
-          </div>
-          <p class="caption">
-            Scene illustration · live motion appears in the MuJoCo window.
-          </p>
-          <dl>
-            <div>
-              <dt>Robot</dt>
-              <dd>Franka Panda</dd>
-            </div>
-            <div>
-              <dt>Blocks</dt>
-              <dd id="object-count">—</dd>
-            </div>
-            <div>
-              <dt>Scene revision</dt>
-              <dd id="revision">—</dd>
-            </div>
-          </dl>
-          <button id="stop" class="stop" type="button">
-            <span aria-hidden="true">■</span> Stop motion
+          <span class="assistant-model">ROBOT ASSISTANT</span>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Workspace tools">
+          <button
+            id="chat-tab"
+            role="tab"
+            aria-selected="true"
+            aria-controls="chat-panel"
+            tabindex="0"
+            type="button"
+          >
+            Conversation</button
+          ><button
+            id="actions-tab"
+            role="tab"
+            aria-selected="false"
+            aria-controls="actions-panel"
+            tabindex="-1"
+            type="button"
+          >
+            Action Lab <span id="action-count">0</span>
           </button>
-          <p class="small">Cancels the action and holds the robot in place.</p>
-        </section>
-        <section class="connection-panel">
-          <h2>Model connection</h2>
-          <p id="provider" role="status">Checking provider configuration…</p>
-        </section>
-        <section class="manual-panel">
-          <h2>Manual physics controls</h2>
-          <p>Run tools directly. These controls do not use Astra.</p>
-          <div class="manual-grid">
-            <button data-tool="build_sorting_station" type="button">
-              Build station</button
-            ><button data-tool="sort_blocks" type="button">
-              Sort red → left</button
-            ><button data-tool="add_obstacle" type="button">Add obstacle</button
-            ><button data-tool="retry_last_task" type="button">
-              Reset & retry
+        </div>
+        <section
+          id="chat-panel"
+          class="tab-panel"
+          role="tabpanel"
+          aria-labelledby="chat-tab"
+        >
+          <div
+            id="transcript"
+            class="transcript"
+            aria-live="polite"
+            aria-relevant="additions text"
+          >
+            <div class="empty">
+              <span class="empty-symbol" aria-hidden="true">↗</span>
+              <h3>What should the robot try?</h3>
+              <p>
+                Build a scene, move an object, or teach your robot a new action.
+              </p>
+            </div>
+          </div>
+          <div class="prompts" aria-label="Scene ideas">
+            <button
+              type="button"
+              data-prompt="Build a Panda workspace with three small colored blocks and a tray. Look up the catalog dimensions and place the objects on the ground or a low support surface within the Panda workspace."
+            >
+              ＋ Panda workspace</button
+            ><button
+              type="button"
+              data-prompt="Stack the green block on the red block in the current Panda workspace. Observe their positions and dimensions, then use a physical grasp."
+            >
+              ↥ Stack a tower</button
+            ><button
+              type="button"
+              data-prompt="Build a scene with a ramp and a ball ready to roll down it. Use the asset catalog, then simulate two seconds."
+            >
+              ↘ Ramp &amp; ball</button
+            ><button
+              type="button"
+              data-prompt="Move the gripper in a horizontal circle."
+            >
+              ◯ Trace a circle
             </button>
           </div>
-          <p class="small">
-            Retry restores the pre-sort blocks and keeps the obstacle.
-          </p>
+          <form id="chat-form">
+            <label class="sr-only" for="message">Message Astra</label
+            ><textarea
+              id="message"
+              rows="3"
+              maxlength="8000"
+              placeholder="What should we build or move?"
+            ></textarea>
+            <div class="composer-footer">
+              <span id="composer-hint">Checking model connection…</span
+              ><button class="primary" id="send" type="submit">
+                Send <span aria-hidden="true">↗</span>
+              </button>
+            </div>
+          </form>
         </section>
-        <details>
-          <summary>World state</summary>
-          <pre id="world-state">Waiting for simulation…</pre>
+        <section
+          id="actions-panel"
+          class="tab-panel actions-panel"
+          role="tabpanel"
+          aria-labelledby="actions-tab"
+          hidden
+        >
+          <div class="lab-intro">
+            <p class="eyebrow">LANGUAGE → TESTED MOTION</p>
+            <h3>Teach a new action.</h3>
+            <p>
+              Astra proposes a motion, tests it in a separate copy of this
+              scene, and refines it from the results.
+            </p>
+          </div>
+          <form id="create-action-form">
+            <label for="action-message">What should the robot do?</label>
+            <textarea
+              id="action-message"
+              rows="3"
+              maxlength="8000"
+              required
+              placeholder="Knock the upper block off this tower."
+            ></textarea>
+            <div class="prompts" aria-label="Action examples">
+              <button
+                type="button"
+                data-action-prompt="Knock the upper block off this tower."
+              >
+                Topple a tower
+              </button>
+              <button
+                type="button"
+                data-action-prompt="Move the gripper in a horizontal circle."
+              >
+                Trace a circle
+              </button>
+            </div>
+            <p class="small proposal-intro">
+              Describe the outcome. Review Astra’s interpretation and exact
+              success checks before any trials start.
+            </p>
+            <div class="action-form-footer">
+              <label class="budget-label" for="trial-budget"
+                >Trial limit
+                <select id="trial-budget">
+                  <option value="3">3 trials</option>
+                  <option value="4">4 trials</option>
+                  <option value="5" selected>5 trials</option>
+                  <option value="6">6 trials</option>
+                  <option value="7">7 trials</option>
+                  <option value="8">8 trials</option>
+                  <option value="9">9 trials</option>
+                  <option value="10">10 trials</option>
+                </select></label
+              ><button id="create-action" class="primary" type="submit">
+                Propose action ↗
+              </button>
+            </div>
+            <p id="action-hint" class="small">
+              Build a Panda workspace to propose an action.
+            </p>
+          </form>
+          <p id="proposal-progress" class="small" role="status" hidden>
+            Astra is interpreting your request…
+          </p>
+          <div id="action-proposal" aria-live="polite"></div>
+          <section class="trial-section" aria-labelledby="trials-title">
+            <div class="section-heading">
+              <h3 id="trials-title">Experiments</h3>
+              <span class="sandbox-badge">SANDBOX</span>
+            </div>
+            <div id="trial-results" aria-live="polite">
+              <p class="small">
+                Your live world stays in place during trials. Successful motions
+                need two confirmation runs before saving.
+              </p>
+            </div>
+          </section>
+          <section class="library-section" aria-labelledby="notebook-title">
+            <div class="section-heading">
+              <h3 id="notebook-title">Experiment notebook</h3>
+              <button class="text-button" id="refresh-notebook" type="button">
+                Refresh
+              </button>
+            </div>
+            <p class="small">
+              Measured attempts and Astra's notes survive restarts. Notes are
+              interpretations; only physical trials verify an action.
+            </p>
+            <form id="notebook-search-form">
+              <label for="notebook-query">Search past experiments</label>
+              <input
+                id="notebook-query"
+                type="search"
+                maxlength="200"
+                placeholder="e.g. circle, blocked, shorter stroke"
+              />
+              <button class="text-button" type="submit">Search</button>
+            </form>
+            <div id="notebook-entries">
+              <p class="small">
+                New experiments will be recorded here automatically.
+              </p>
+            </div>
+          </section>
+          <section class="library-section" aria-labelledby="library-title">
+            <div class="section-heading">
+              <h3 id="library-title">Saved actions</h3>
+              <button class="text-button" id="refresh-actions" type="button">
+                Refresh
+              </button>
+            </div>
+            <div id="saved-actions">
+              <p class="small">
+                Tested actions will appear here, ready to run in the live world.
+              </p>
+            </div>
+          </section>
+        </section>
+        <p id="error" role="alert"></p>
+        <details class="provider-details">
+          <summary>
+            <span class="status-dot" id="provider-dot"></span> Model connection
+          </summary>
+          <p id="provider">Checking provider configuration…</p>
         </details>
       </aside>
     </main>
     <footer>
-      <span>ASTRA ROBOT WORLD</span
-      ><span>Real physics. Observable outcomes.</span>
+      <span>ASTRA ROBOT WORLD</span><span>Built on MuJoCo physics.</span>
     </footer>
     <script src="/app.js"></script>
   </body>

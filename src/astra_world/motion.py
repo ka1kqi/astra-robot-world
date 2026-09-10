@@ -5,7 +5,21 @@ import mujoco
 import numpy as np
 from scipy.spatial.transform import Rotation
 
+from .scene import HOME
+
 DOWN = np.diag([1.0, -1.0, -1.0])
+
+
+def body_name(world, entity_id):
+    return world.body_name(entity_id) if hasattr(world, "body_name") else entity_id
+
+
+def joint_name(world, entity_id):
+    return (
+        world.joint_name(entity_id)
+        if hasattr(world, "joint_name")
+        else entity_id + "_joint"
+    )
 
 
 class MotionError(RuntimeError):
@@ -18,29 +32,47 @@ def solve_ik(world, position, seed_q, rotation=DOWN):
     model = world.model
     scratch = mujoco.MjData(model)
     scratch.qpos[:] = world.data.qpos
-    q = np.asarray(seed_q).copy()
     target = np.asarray(position)
     site = model.site("grasp").id
     jacp, jacr = np.zeros((3, model.nv)), np.zeros((3, model.nv))
     limits = model.jnt_range[:7]
-    for _ in range(160):
-        scratch.qpos[:7] = q
-        mujoco.mj_fwdPosition(model, scratch)
-        delta = target - scratch.site_xpos[site]
-        orient = Rotation.from_matrix(
-            rotation @ scratch.site_xmat[site].reshape(3, 3).T
-        ).as_rotvec()
-        if np.linalg.norm(delta) < 0.0004 and np.linalg.norm(orient) < 0.004:
-            return q
-        mujoco.mj_jacSite(model, scratch, jacp, jacr, site)
-        jac = np.vstack([jacp[:, :7], jacr[:, :7]])
-        error = np.r_[delta, orient]
-        dq = jac.T @ np.linalg.solve(jac @ jac.T + 0.0001 * np.eye(6), error)
-        q = np.clip(
-            q + dq * min(1.0, 0.15 / max(np.max(np.abs(dq)), 0.001)),
-            limits[:, 0] + 0.001,
-            limits[:, 1] - 0.001,
-        )
+
+    def solve_from(seed):
+        q = np.asarray(seed).copy()
+        for _ in range(160):
+            scratch.qpos[:7] = q
+            mujoco.mj_fwdPosition(model, scratch)
+            delta = target - scratch.site_xpos[site]
+            orient = Rotation.from_matrix(
+                rotation @ scratch.site_xmat[site].reshape(3, 3).T
+            ).as_rotvec()
+            if np.linalg.norm(delta) < 0.0004 and np.linalg.norm(orient) < 0.004:
+                return q
+            mujoco.mj_jacSite(model, scratch, jacp, jacr, site)
+            jac = np.vstack([jacp[:, :7], jacr[:, :7]])
+            error = np.r_[delta, orient]
+            dq = jac.T @ np.linalg.solve(jac @ jac.T + 0.0001 * np.eye(6), error)
+            q = np.clip(
+                q + dq * min(1.0, 0.15 / max(np.max(np.abs(dq)), 0.001)),
+                limits[:, 0] + 0.001,
+                limits[:, 1] - 0.001,
+            )
+        return None
+
+    # Keep the original solution branch for ordinary incremental motion.
+    result = solve_from(seed_q)
+    if result is not None:
+        return result
+    # A stalled local search does not establish geometric unreachability. Try a
+    # small deterministic set of shoulder/elbow postures, still on scratch data.
+    perturbation = np.array([1.2, 0, 1.0, 0, 0, 0, 0])
+    for seed in (limits.mean(axis=1), HOME, HOME + perturbation, HOME - perturbation):
+        seed = np.clip(seed, limits[:, 0] + 0.001, limits[:, 1] - 0.001)
+        if np.array_equal(seed, seed_q):
+            continue
+        result = solve_from(seed)
+        if result is not None:
+            return result
     return None
 
 
@@ -107,7 +139,7 @@ class Controller:
         self.step(0.8)
 
 
-def colliding(world, scratch, held_id=None):
+def colliding(world, scratch, held_id=None, contact_ids=()):
     """Reject arm/self/environment and held-object contacts, except finger grasp."""
     m = world.model
     robot_bodies = {
@@ -127,7 +159,8 @@ def colliding(world, scratch, held_id=None):
         ]
     }
     fingers = {m.body("left_finger").id, m.body("right_finger").id}
-    held_body = m.body(held_id).id if held_id else -1
+    held_body = m.body(body_name(world, held_id)).id if held_id else -1
+    contact_bodies = {m.body(body_name(world, name)).id for name in contact_ids}
     base = m.body("link0").id
     for contact in scratch.contact:
         if contact.dist > -0.0008:
@@ -137,12 +170,21 @@ def colliding(world, scratch, held_id=None):
             continue
         if (a == held_body and b in fingers) or (b == held_body and a in fingers):
             continue
+        if (a in contact_bodies and b in fingers) or (b in contact_bodies and a in fingers):
+            continue
         if base in (a, b) and 0 in (a, b):
             continue
         # The held block may still touch its support during initial lift/lowering.
         if held_body in (a, b) and not (a in robot_bodies or b in robot_bodies):
             other_geom = int(contact.geom[1] if a == held_body else contact.geom[0])
             name = m.geom(other_geom).name or ""
+            if (
+                hasattr(world, "observe")
+                and contact.dist > -0.003
+                and abs(contact.frame[2]) > 0.8
+                and contact.pos[2] < scratch.body(held_body).xpos[2] - 0.005
+            ):
+                continue
             if name == "table" or name.endswith("_floor"):
                 continue
         return (
@@ -160,9 +202,11 @@ def path_is_clear(world, qs, held_id=None):
     if held_id:
         hand_rot = world.data.site_xmat[hand].reshape(3, 3)
         rel_pos = hand_rot.T @ (
-            world.data.body(held_id).xpos - world.data.site_xpos[hand]
+            world.data.body(body_name(world, held_id)).xpos - world.data.site_xpos[hand]
         )
-        rel_rot = hand_rot.T @ world.data.body(held_id).xmat.reshape(3, 3)
+        rel_rot = hand_rot.T @ world.data.body(body_name(world, held_id)).xmat.reshape(
+            3, 3
+        )
     start = world.arm_q
     for target in qs:
         samples = max(2, int(np.max(np.abs(target - start)) / 0.012) + 1)
@@ -171,7 +215,7 @@ def path_is_clear(world, qs, held_id=None):
             mujoco.mj_fwdPosition(world.model, scratch)
             if held_id:
                 rot = scratch.site_xmat[hand].reshape(3, 3)
-                joint = scratch.joint(held_id + "_joint")
+                joint = scratch.joint(joint_name(world, held_id))
                 joint.qpos[:3] = scratch.site_xpos[hand] + rot @ rel_pos
                 quat_xyzw = Rotation.from_matrix(rot @ rel_rot).as_quat()
                 joint.qpos[3:] = quat_xyzw[[3, 0, 1, 2]]
@@ -187,7 +231,7 @@ def plan_transport(world, target, held_id=None):
     start = world.data.site("grasp").xpos.copy()
     target = np.asarray(target)
     candidates = [("direct", [target])]
-    if world.obstacles:
+    if world.obstacles or hasattr(world, "observe"):
         # Side corridors stay below the barrier top and visibly go around it.
         for x, label in [(0.66, "outer detour"), (0.23, "inner detour")]:
             z = max(start[2], target[2], 0.24)
@@ -234,7 +278,9 @@ def execute_transport(ctl, target, held_id=None):
         ctl.move_q(q, 1.6)
         if (
             held_id
-            and np.linalg.norm(w.data.body(held_id).xpos - w.data.site("grasp").xpos)
+            and np.linalg.norm(
+                w.data.body(body_name(w, held_id)).xpos - w.data.site("grasp").xpos
+            )
             > 0.065
         ):
             raise MotionError("grasp_lost", "The block slipped from the gripper.")

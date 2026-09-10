@@ -152,6 +152,8 @@ def bin_for(world, block_id):
 
 
 def observe(world):
+    if hasattr(world, 'observe'):
+        return world.observe()
     blocks = []
     for name, color in zip(world.block_ids, world.spec.block_colors):
         blocks.append(

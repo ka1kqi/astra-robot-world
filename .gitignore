@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.DS_Store
+assets/menagerie/
+artifacts/
+
+.env
+.env.*
+!.env.example

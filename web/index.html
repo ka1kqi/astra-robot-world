@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Astra · Robot World</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/" aria-label="Astra Robot World home"
+        ><span class="mark" aria-hidden="true">a<span>↗</span></span
+        ><span>astra <small>ROBOT WORLD</small></span></a
+      >
+      <div class="local">
+        <i></i> Local simulation <span class="divider">/</span> Panda arm
+      </div>
+    </header>
+    <main>
+      <section class="workspace" aria-labelledby="title">
+        <div class="intro">
+          <p class="eyebrow">LANGUAGE → ACTION</p>
+          <h1 id="title">Give your words<br />a world to move.</h1>
+          <p>
+            Build a station. Give the robot a task.<br />Change the scene and
+            watch it adapt in the native viewer.
+          </p>
+        </div>
+        <div class="conversation-head">
+          <h2>Conversation</h2>
+          <span id="action-status" role="status">Connecting…</span>
+        </div>
+        <div
+          id="transcript"
+          class="transcript"
+          aria-live="polite"
+          aria-relevant="additions text"
+        >
+          <div class="empty">
+            <p>One arm. A world of possibilities.</p>
+            <span>Start with the sorting station below.</span>
+          </div>
+        </div>
+        <div class="prompts" aria-label="Demo prompts">
+          <button
+            type="button"
+            data-prompt="Build a sorting station with colored blocks and two bins."
+          >
+            <span>01</span> Build a sorting station</button
+          ><button
+            type="button"
+            data-prompt="Put the red blocks in the left bin."
+          >
+            <span>02</span> Sort the red blocks</button
+          ><button
+            type="button"
+            data-prompt="Now add an obstacle between the robot and that bin."
+          >
+            <span>03</span> Add an obstacle</button
+          ><button type="button" data-prompt="Try again.">
+            <span>04</span> Try again
+          </button>
+        </div>
+        <form id="chat-form">
+          <label class="sr-only" for="message">Message Astra</label
+          ><textarea
+            id="message"
+            rows="2"
+            maxlength="8000"
+            placeholder="Tell Astra what to build or move…"
+          ></textarea>
+          <div class="composer-footer">
+            <span id="composer-hint"
+              >Live model configuration is checked on startup.</span
+            ><button class="primary" id="send" type="submit">
+              Run <span aria-hidden="true">↗</span>
+            </button>
+          </div>
+        </form>
+        <p id="error" role="alert"></p>
+      </section>
+      <aside>
+        <section class="world-panel">
+          <div class="panel-title">
+            <h2>The physical world</h2>
+            <span class="tag">NATIVE VIEWER</span>
+          </div>
+          <div class="world-illustration" aria-hidden="true">
+            <div class="tabletop">
+              <div class="bin left">L</div>
+              <div class="bin right">R</div>
+              <div class="block red"></div>
+              <div class="block blue"></div>
+              <div class="block green"></div>
+              <div class="arm-base"></div>
+              <div class="arm-link"></div>
+              <div class="arm-hand"></div>
+            </div>
+          </div>
+          <p class="caption">
+            Scene illustration · live motion appears in the MuJoCo window.
+          </p>
+          <dl>
+            <div>
+              <dt>Robot</dt>
+              <dd>Franka Panda</dd>
+            </div>
+            <div>
+              <dt>Blocks</dt>
+              <dd id="object-count">—</dd>
+            </div>
+            <div>
+              <dt>Scene revision</dt>
+              <dd id="revision">—</dd>
+            </div>
+          </dl>
+          <button id="stop" class="stop" type="button">
+            <span aria-hidden="true">■</span> Stop motion
+          </button>
+          <p class="small">Cancels the action and holds the robot in place.</p>
+        </section>
+        <section class="connection-panel">
+          <h2>Model connection</h2>
+          <p id="provider" role="status">Checking provider configuration…</p>
+        </section>
+        <section class="manual-panel">
+          <h2>Manual physics controls</h2>
+          <p>Run tools directly. These controls do not use Astra.</p>
+          <div class="manual-grid">
+            <button data-tool="build_sorting_station" type="button">
+              Build station</button
+            ><button data-tool="sort_blocks" type="button">
+              Sort red → left</button
+            ><button data-tool="add_obstacle" type="button">Add obstacle</button
+            ><button data-tool="retry_last_task" type="button">
+              Reset & retry
+            </button>
+          </div>
+          <p class="small">
+            Retry restores the pre-sort blocks and keeps the obstacle.
+          </p>
+        </section>
+        <details>
+          <summary>World state</summary>
+          <pre id="world-state">Waiting for simulation…</pre>
+        </details>
+      </aside>
+    </main>
+    <footer>
+      <span>ASTRA ROBOT WORLD</span
+      ><span>Real physics. Observable outcomes.</span>
+    </footer>
+    <script src="/app.js"></script>
+  </body>
+</html>
